@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>분당승무</title>
 <meta name="theme-color" content="#FFD600">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,17 +34,17 @@ html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto San
 .admin-btn{background:var(--BK);color:var(--Y);border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 .content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
-.screen{display:none;padding:14px 14px 88px;min-height:100%;}
+.screen{display:none;padding:14px 14px calc(88px + env(safe-area-inset-bottom, 16px));min-height:100%;}
 .screen.active{display:block;}
-.nav-wrap{position:absolute;bottom:0;left:0;right:0;background:var(--WH);border-top:1px solid #e0e0e0;z-index:100;}
+.nav-wrap{position:absolute;bottom:0;left:0;right:0;background:var(--WH);border-top:1px solid #e0e0e0;z-index:100;padding-bottom:env(safe-area-inset-bottom, 0px);}
 .nav-scroll{display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 2px;}
 .nav-scroll::-webkit-scrollbar{display:none;}
-.nav-item{flex:0 0 calc(100%/3);display:flex;flex-direction:column;align-items:center;padding:8px 4px 8px;cursor:pointer;border:none;background:none;min-width:0;transition:background 0.15s;}
+.nav-item{flex:0 0 calc(100%/3);display:flex;flex-direction:column;align-items:center;padding:10px 4px 10px;cursor:pointer;border:none;background:none;min-width:0;transition:background 0.15s;}
 .nav-item .ni{font-size:20px;color:var(--GRL);}
 .nav-item .nl{font-size:10px;color:var(--GRL);font-weight:600;margin-top:2px;white-space:nowrap;}
 .nav-item.active .ni,.nav-item.active .nl{color:var(--YDK);}
 .nav-item.active{background:var(--YL);}
-.nav-dots{display:flex;justify-content:center;gap:5px;padding:3px 0 6px;}
+.nav-dots{display:flex;justify-content:center;gap:5px;padding:3px 0 4px;}
 .nav-dot{width:5px;height:5px;border-radius:50%;background:#ddd;transition:all 0.2s;}
 .nav-dot.active{background:var(--YDK);width:14px;}
 .card{background:var(--WH);border-radius:var(--R);padding:14px;margin-bottom:10px;border:0.5px solid #e8e8e8;box-shadow:var(--shadow);}
