@@ -1,5 +1,5 @@
 // 분당승무 Service Worker
-const CACHE_NAME = 'bundang-v1';
+const CACHE_NAME = 'bundang-v2';
 const CACHE_FILES = [
   './',
   './index.html',
