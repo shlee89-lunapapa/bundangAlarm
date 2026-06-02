@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>분당승무</title>
+<meta name="theme-color" content="#FFD600">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="분당승무">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --Y:#FFD600;--YD:#F0B800;--YL:#FFFDE7;--YDK:#FF8F00;
+  --BK:#111;--GR:#555;--GRL:#aaa;--BG:#F5F5F5;--WH:#fff;
+  --RD:#E53935;--BL:#1565C0;--GN:#2E7D32;
+  --R:12px;--RS:8px;--shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto Sans KR',sans-serif;}
+.app{display:flex;flex-direction:column;height:100vh;max-width:420px;margin:0 auto;background:var(--BG);position:relative;overflow:hidden;}
+/* 헤더 */
+.hdr{background:var(--Y);padding:10px 16px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:2px solid var(--YD);position:relative;}
+.hdr-left{display:flex;align-items:center;gap:8px;z-index:1;}
+.hdr-icon{width:30px;height:30px;background:var(--BK);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.hdr-title{font-size:16px;font-weight:900;color:var(--BK);}
+.hdr-clock{position:absolute;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;}
+.hdr-date{font-size:10px;color:#555;font-weight:600;}
+.hdr-time{font-size:15px;font-weight:900;color:var(--BK);letter-spacing:1px;font-variant-numeric:tabular-nums;}
+.admin-btn{background:var(--BK);color:var(--Y);border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;z-index:1;}
+/* 화면 */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.screen{display:none;padding:14px 14px calc(88px + env(safe-area-inset-bottom,16px));min-height:100%;}
+.screen.active{display:block;}
+/* 네비 */
+.nav-wrap{position:absolute;bottom:0;left:0;right:0;background:var(--WH);border-top:1px solid #e0e0e0;z-index:100;padding-bottom:env(safe-area-inset-bottom,0px);}
+.nav-scroll{display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 2px;}
+.nav-scroll::-webkit-scrollbar{display:none;}
+.nav-item{flex:0 0 calc(100%/3);display:flex;flex-direction:column;align-items:center;padding:10px 4px;cursor:pointer;border:none;background:none;min-width:0;transition:background 0.15s;}
+.nav-item .ni{font-size:20px;color:var(--GRL);}
+.nav-item .nl{font-size:10px;color:var(--GRL);font-weight:600;margin-top:2px;white-space:nowrap;}
+.nav-item.active .ni,.nav-item.active .nl{color:var(--YDK);}
+.nav-item.active{background:var(--YL);}
+.nav-dots{display:flex;justify-content:center;gap:5px;padding:3px 0 4px;}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:#ddd;transition:all 0.2s;}
+.nav-dot.active{background:var(--YDK);width:14px;}
+/* 공통 */
+.card{background:var(--WH);border-radius:var(--R);padding:14px;margin-bottom:10px;border:0.5px solid #e8e8e8;box-shadow:var(--shadow);}
+.sec-label{font-size:10px;font-weight:700;color:var(--GR);padding:12px 2px 6px;text-transform:uppercase;letter-spacing:0.8px;}
+.badge-y{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--Y);color:var(--BK);}
+.up-badge{background:#E3F2FD;color:#1565C0;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;}
+.dn-badge{background:#FCE4EC;color:#880E4F;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;}
+.btn-y{width:100%;padding:14px;background:var(--Y);border:2px solid var(--YD);border-radius:var(--RS);font-size:15px;font-weight:800;color:var(--BK);cursor:pointer;}
+.btn-rd{padding:7px 11px;background:none;border:1px solid var(--RD);border-radius:6px;font-size:11px;font-weight:700;color:var(--RD);cursor:pointer;white-space:nowrap;}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #ddd;border-top-color:var(--YDK);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty{text-align:center;padding:44px 20px;color:var(--GRL);}
+.empty-ico{font-size:44px;margin-bottom:10px;}
+/* 알람 화면 */
+.dia-input{width:100%;padding:14px;border:2px solid #ddd;border-radius:var(--RS);font-size:28px;font-weight:900;text-align:center;letter-spacing:8px;outline:none;color:var(--BK);transition:border-color 0.2s;}
+.dia-input:focus{border-color:var(--YDK);}
+.dia-input::placeholder{font-size:13px;letter-spacing:0;color:#bbb;font-weight:400;}
+.type-badge-wrap{text-align:center;margin-top:8px;min-height:24px;}
+.alarm-prev-item{display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid #f0f0f0;gap:10px;}
+.alarm-prev-item:last-child{border-bottom:none;}
+.acolor-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ainfo{flex:1;min-width:0;}
+.ainfo-title{font-size:13px;font-weight:700;color:var(--BK);}
+.ainfo-sub{font-size:11px;color:var(--GR);margin-top:1px;}
+.atime{font-size:20px;font-weight:900;color:var(--BK);}
+.no-prev{text-align:center;padding:20px;color:#ccc;font-size:13px;line-height:1.7;}
+/* 알람 등록 안내박스 */
+.android-alarm-box{background:#E8F5E9;border:1px solid var(--GN);border-radius:var(--RS);padding:10px 14px;margin-top:8px;font-size:12px;color:#1B5E20;line-height:1.7;display:none;}
+/* 목록 */
+.list-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.list-cnt{font-size:10px;font-weight:700;color:var(--GR);text-transform:uppercase;letter-spacing:0.8px;}
+.cnt-badge{background:var(--RD);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:5px;}
+.alarm-list-item{background:var(--WH);border-radius:var(--R);padding:12px;margin-bottom:8px;border:0.5px solid #e8e8e8;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);}
+.acolor-bar{width:4px;border-radius:3px;align-self:stretch;flex-shrink:0;}
+.ali-left{flex:1;min-width:0;}
+.ali-dia{font-size:10px;color:var(--GR);margin-bottom:2px;}
+.ali-title{font-size:14px;font-weight:700;color:var(--BK);}
+.ali-time{font-size:22px;font-weight:900;color:var(--YDK);}
+.ali-real{font-size:10px;color:var(--GR);}
+.ali-remain{font-size:11px;font-weight:700;color:var(--GN);margin-top:2px;}
+.ali-remain.soon{color:var(--RD);}
+/* 설정 */
+.set-row{background:var(--WH);border-radius:var(--RS);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;border:0.5px solid #e8e8e8;}
+.set-lbl{font-size:14px;font-weight:600;color:var(--BK);}
+.set-sub{font-size:11px;color:var(--GR);}
+.set-input{width:60px;padding:6px;border:1.5px solid #ddd;border-radius:6px;font-size:14px;font-weight:700;text-align:center;outline:none;color:var(--BK);}
+.set-input:focus{border-color:var(--YDK);}
+.sound-option{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--WH);border-radius:var(--RS);margin-bottom:4px;border:1.5px solid #ddd;cursor:pointer;transition:all 0.15s;}
+.sound-option.selected{border-color:var(--YDK);background:var(--YL);}
+.sound-left{display:flex;align-items:center;gap:10px;}
+.sound-name{font-size:14px;font-weight:600;color:var(--BK);}
+.sound-play{width:34px;height:34px;border-radius:50%;background:var(--Y);border:2px solid var(--YD);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.sound-play.playing{background:var(--RD);border-color:var(--RD);color:#fff;}
+.save-btn{width:100%;padding:13px;background:var(--Y);border:2px solid var(--YD);border-radius:var(--RS);font-size:15px;font-weight:800;color:var(--BK);cursor:pointer;margin-top:8px;}
+/* 사규 */
+.reg-item{background:var(--WH);border-radius:var(--R);padding:14px 16px;margin-bottom:8px;border:0.5px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;cursor:pointer;box-shadow:var(--shadow);}
+.reg-icon{width:40px;height:40px;border-radius:10px;background:var(--YL);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.reg-title{font-size:14px;font-weight:700;color:var(--BK);}
+.reg-sub{font-size:11px;color:var(--GR);margin-top:2px;}
+/* 모달 */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;align-items:flex-end;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-sheet{background:var(--WH);border-radius:20px 20px 0 0;width:100%;max-width:420px;max-height:88vh;display:flex;flex-direction:column;}
+.modal-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:12px auto 4px;}
+.modal-hdr{padding:8px 16px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #eee;flex-shrink:0;}
+.modal-title{font-size:16px;font-weight:800;color:var(--BK);}
+.modal-close{width:30px;height:30px;border-radius:50%;background:#f0f0f0;border:none;font-size:16px;cursor:pointer;}
+.modal-body{flex:1;overflow-y:auto;padding:16px;}
+/* 자위소방대 */
+.fire-row{display:flex;gap:8px;margin-bottom:12px;}
+.fire-input{flex:1;padding:12px 14px;border:1.5px solid #ddd;border-radius:var(--RS);font-size:15px;outline:none;color:var(--BK);}
+.fire-input:focus{border-color:var(--YDK);}
+.fire-btn{padding:12px 14px;background:var(--Y);border:2px solid var(--YD);border-radius:var(--RS);font-size:14px;font-weight:800;color:var(--BK);cursor:pointer;}
+/* 관리자 */
+.admin-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:400;align-items:flex-end;justify-content:center;}
+.admin-ov.show{display:flex;}
+.admin-sheet{background:var(--WH);border-radius:20px 20px 0 0;width:100%;max-width:420px;padding:20px 18px 36px;max-height:92vh;overflow-y:auto;}
+.admin-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 18px;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+.stat-card{background:var(--YL);border-radius:var(--RS);padding:12px;border:1px solid var(--YD);}
+.stat-num{font-size:26px;font-weight:900;color:var(--BK);}
+.stat-lbl{font-size:10px;color:var(--GR);margin-top:2px;}
+.emg-ta{width:100%;padding:12px;border:1.5px solid #ddd;border-radius:var(--RS);font-size:14px;resize:none;outline:none;font-family:inherit;margin-bottom:8px;}
+.emg-ta:focus{border-color:var(--RD);}
+.btn-emg{width:100%;padding:13px;background:var(--RD);border:none;border-radius:var(--RS);font-size:15px;font-weight:800;color:#fff;cursor:pointer;}
+.log-item{padding:10px 0;border-bottom:0.5px solid #f0f0f0;}
+.log-date{font-size:11px;color:var(--GR);}
+.log-msg{font-size:13px;color:var(--BK);margin-top:2px;}
+.pw-input{width:100%;padding:12px;border:1.5px solid #ddd;border-radius:var(--RS);font-size:15px;outline:none;margin-bottom:10px;}
+.pw-btn{width:100%;padding:13px;background:var(--Y);border:2px solid var(--YD);border-radius:var(--RS);font-size:15px;font-weight:800;color:var(--BK);cursor:pointer;}
+/* 긴급/알람 팝업 공통 */
+.popup-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:800;align-items:center;justify-content:center;padding:20px;}
+.popup-ov.show{display:flex;}
+@keyframes popIn{from{transform:scale(0.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+/* 알람 팝업 */
+.alarm-box{background:var(--WH);border-radius:var(--R);padding:28px 20px;width:100%;max-width:320px;border-top:6px solid var(--YDK);text-align:center;animation:popIn 0.3s ease;}
+.alarm-ring-ico{font-size:52px;animation:ring 0.4s infinite alternate;}
+@keyframes ring{from{transform:rotate(-20deg);}to{transform:rotate(20deg);}}
+.alarm-dia{font-size:12px;color:var(--GR);margin-bottom:4px;}
+.alarm-lbl{font-size:20px;font-weight:900;color:var(--BK);margin-bottom:4px;}
+.alarm-t{font-size:44px;font-weight:900;color:var(--YDK);font-variant-numeric:tabular-nums;margin-bottom:20px;}
+.btn-alarm-stop{width:100%;padding:15px;background:var(--RD);border:none;border-radius:var(--RS);font-size:17px;font-weight:800;color:#fff;cursor:pointer;}
+/* 긴급메시지 팝업 */
+.emg-box{background:var(--WH);border-radius:var(--R);padding:24px 20px;width:100%;max-width:320px;border-top:6px solid var(--RD);text-align:center;animation:popIn 0.3s ease;}
+.emg-title{font-size:16px;font-weight:800;color:var(--RD);margin-bottom:10px;}
+.emg-msg{font-size:14px;color:var(--BK);line-height:1.7;margin-bottom:18px;}
+.emg-close{padding:10px 28px;background:var(--RD);border:none;border-radius:6px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;}
+/* 알림 배너 */
+.notif-banner{background:#E3F2FD;border:1px solid var(--BL);border-radius:var(--RS);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.notif-txt{font-size:12px;color:var(--BL);flex:1;line-height:1.5;}
+.notif-btn{padding:6px 12px;background:var(--BL);border:none;border-radius:6px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;}
+/* 토스트 */
+.toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:600;opacity:0;transition:all 0.25s;z-index:900;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-icon">🚆</div>
+      <div class="hdr-title">분당승무</div>
+    </div>
+    <div class="hdr-clock">
+      <div class="hdr-date" id="hdrDate"></div>
+      <div class="hdr-time" id="hdrTime"></div>
+    </div>
+    <button class="admin-btn" onclick="openAdmin()">관리자</button>
+  </div>
+
+  <div class="content">
+    <div class="screen active" id="sc-alarm">
+      <div id="notifBanner" style="display:none;">
+        <div class="notif-banner">
+          <div class="notif-txt">🔔 앱이 열려있을 때 알람이 울립니다.<br>알림 허용 시 잠금화면 알림도 가능합니다.</div>
+          <button class="notif-btn" onclick="requestNotif()">허용</button>
+        </div>
+      </div>
+      <div class="sec-label">다이아 번호 입력</div>
+      <div class="card">
+        <input type="number" class="dia-input" id="diaInput" placeholder="예: 17001" maxlength="5" oninput="onDiaInput(this.value)">
+        <div class="type-badge-wrap" id="typeBadge"></div>
+      </div>
+      <div class="sec-label">알람 미리보기</div>
+      <div class="card" id="alarmPrev">
+        <div class="no-prev">다이아 번호를 입력하면<br>알람이 미리 표시됩니다</div>
+      </div>
+      <div id="setAlarmWrap" style="display:none;margin-top:4px;">
+        <button class="btn-y" onclick="setAlarms()">✅ 알람 설정하기</button>
+      </div>
+      <div class="android-alarm-box" id="androidAlarmBox">
+        📱 <b>앱을 닫아도 알람이 울리려면:</b><br>
+        설정된 알람 시각을 기기 <b>기본 알람 앱</b>에도 별도 등록해두세요.<br>
+        (이 앱은 열려있을 때만 알람이 울립니다)
+      </div>
+    </div>
+
+    <div class="screen" id="sc-list">
+      <div class="list-hdr">
+        <div class="list-cnt">설정된 알람 <span class="cnt-badge" id="cntBadge">0</span></div>
+        <button class="btn-rd" onclick="clearAll()">전체삭제</button>
+      </div>
+      <div id="alarmList">
+        <div class="empty"><div class="empty-ico">🔕</div><div style="font-size:13px;">설정된 알람이 없습니다</div></div>
+      </div>
+    </div>
+
+    <div class="screen" id="sc-settings">
+      <div class="sec-label">사전 알람 시간 설정</div>
+      <div id="setRows"></div>
+      <div class="sec-label">알람음 선택 (▶ 눌러서 미리듣기)</div>
+      <div id="soundList"></div>
+      <button class="save-btn" onclick="saveSettings()">💾 설정 저장</button>
+    </div>
+
+    <div class="screen" id="sc-rules">
+      <div class="sec-label">규정 및 매뉴얼</div>
+      <div class="reg-item" onclick="openReg('고장조치')">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="reg-icon">⚙️</div>
+          <div><div class="reg-title">전기동차 고장조치 매뉴얼</div><div class="reg-sub">차량별 고장 대응 절차</div></div>
+        </div><span style="font-size:10px;color:var(--GRL);">›</span>
+      </div>
+      <div class="reg-item" onclick="openReg('비상대응')">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="reg-icon">🚨</div>
+          <div><div class="reg-title">비상대응 매뉴얼</div><div class="reg-sub">사고·긴급 상황 대응 절차</div></div>
+        </div><span style="font-size:10px;color:var(--GRL);">›</span>
+      </div>
+      <div class="reg-item" onclick="openReg('안내방송')">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="reg-icon">📢</div>
+          <div><div class="reg-title">안내방송 매뉴얼</div><div class="reg-sub">상황별 안내방송 멘트</div></div>
+        </div><span style="font-size:10px;color:var(--GRL);">›</span>
+      </div>
+      <div class="reg-item" onclick="openReg('운전취급')">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="reg-icon">📋</div>
+          <div><div class="reg-title">운전취급 규정</div><div class="reg-sub">분당선 운전 기본 규정</div></div>
+        </div><span style="font-size:10px;color:var(--GRL);">›</span>
+      </div>
+      <div style="text-align:center;padding:16px;color:#ccc;font-size:12px;">📌 규정 개정 시 관리자가 구글 시트에서 업데이트합니다</div>
+    </div>
+
+    <div class="screen" id="sc-fire">
+      <div class="sec-label">자위소방 임무 조회</div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--GR);margin-bottom:10px;">이름을 입력하고 조회하세요. 본인 정보만 표시됩니다.</div>
+        <div class="fire-row">
+          <input type="text" class="fire-input" id="fireNameInput" placeholder="이름 입력" maxlength="10" onkeydown="if(event.key==='Enter')searchFire()">
+          <button class="fire-btn" onclick="searchFire()">조회</button>
+        </div>
+      </div>
+      <div id="fireResult"></div>
+    </div>
+  </div>
+
+  <div class="nav-wrap">
+    <div class="nav-scroll" id="navScroll">
+      <button class="nav-item active" onclick="goTab('alarm',0)" id="nav-alarm"><span class="ni">🔔</span><span class="nl">알람</span></button>
+      <button class="nav-item" onclick="goTab('list',1)" id="nav-list"><span class="ni">📋</span><span class="nl">목록</span></button>
+      <button class="nav-item" onclick="goTab('settings',2)" id="nav-settings"><span class="ni">⚙️</span><span class="nl">설정</span></button>
+      <button class="nav-item" onclick="goTab('rules',3)" id="nav-rules"><span class="ni">📖</span><span class="nl">사규</span></button>
+      <button class="nav-item" onclick="goTab('fire',4)" id="nav-fire"><span class="ni">🚒</span><span class="nl">자위소방대</span></button>
+    </div>
+    <div class="nav-dots">
+      <div class="nav-dot active" id="dot0"></div>
+      <div class="nav-dot" id="dot1"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-ov" id="regModal" onclick="if(event.target.id==='regModal')document.getElementById('regModal').classList.remove('show')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <div class="modal-title" id="regModalTitle">매뉴얼</div>
+      <button class="modal-close" onclick="document.getElementById('regModal').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-body" id="regModalBody">
+      <div style="text-align:center;padding:40px 20px;color:var(--GRL);"><div style="font-size:40px;margin-bottom:12px;">📄</div><div style="font-size:14px;line-height:1.7;">내용 준비 중입니다.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="admin-ov" id="adminOv" onclick="if(event.target.id==='adminOv')closeAdmin()">
+  <div class="admin-sheet">
+    <div class="admin-handle"></div>
+    <div id="adminLogin">
+      <div style="font-size:18px;font-weight:800;color:var(--BK);margin-bottom:4px;">🔐 관리자 모드</div>
+      <div style="font-size:13px;color:var(--GR);margin-bottom:18px;">관리자 비밀번호를 입력하세요</div>
+      <input type="password" class="pw-input" id="pwInput" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doAdminLogin()">
+      <button class="pw-btn" onclick="doAdminLogin()">로그인</button>
+    </div>
+    <div id="adminDash" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-size:18px;font-weight:800;">📊 관리자 대시보드</div>
+        <button onclick="closeAdmin()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button>
+      </div>
+      <div style="font-size:12px;color:var(--GR);margin-bottom:14px;">분당승무 앱 현황</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num" id="stUsers">-</div><div class="stat-lbl">총 사용자</div></div>
+        <div class="stat-card"><div class="stat-num" id="stToday">-</div><div class="stat-lbl">오늘 접속</div></div>
+        <div class="stat-card"><div class="stat-num" id="stWeek">-</div><div class="stat-lbl">이번주 활성</div></div>
+        <div class="stat-card"><div class="stat-num" id="stAlarms">-</div><div class="stat-lbl">누적 알람설정</div></div>
+      </div>
+      <div class="sec-label" style="padding-top:0;">🚨 긴급 메시지 발송</div>
+      <textarea class="emg-ta" id="emgMsg" rows="3" placeholder="운행선 긴급 메시지를 입력하세요..."></textarea>
+      <button class="btn-emg" onclick="sendEmergency()">📢 전체 발송</button>
+      <div class="sec-label" style="padding-top:14px;">📋 발송 이력</div>
+      <div id="emgLog"><div style="text-align:center;padding:12px;color:#ccc;font-size:12px;">이력 없음</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="popup-ov" id="alarmPopup">
+  <div class="alarm-box">
+    <div class="alarm-ring-ico">🔔</div>
+    <div class="alarm-dia" id="apDia"></div>
+    <div class="alarm-lbl" id="apLabel"></div>
+    <div class="alarm-t" id="apTime"></div>
+    <button class="btn-alarm-stop" onclick="stopAlarm()">🔕 알람 끄기</button>
+  </div>
+</div>
+
+<div class="popup-ov" id="emgPopup">
+  <div class="emg-box">
+    <div style="font-size:40px;margin-bottom:10px;">🚨</div>
+    <div class="emg-title">긴급 메시지</div>
+    <div class="emg-msg" id="emgPopupMsg"></div>
+    <button class="emg-close" onclick="closeEmgPopup()">확인</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================
+// 설정
+// =====================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyslisHO5xnO7iCqxr5ljFBJrSIxLTLyuKgohH95tCSP02c2URKh4osuA7Sf0BuQ_St/exec';
+
+let USER_ID = (() => {
+  try {
+    let id = sessionStorage.getItem('bds_uid');
+    if (!id) { id='u_'+Date.now()+'_'+Math.random().toString(36).substr(2,8); sessionStorage.setItem('bds_uid',id); }
+    return id;
+  } catch(e) { return 'u_'+Date.now(); }
+})();
+
+let adminPw = '';
+let MEM = { settings:{}, alarms:[] };
+
+// 긴급메시지 중복 방지 - 식별 ID 및 텍스트 본문 동시 검증
+let lastShownEmgId = '';
+let lastShownEmgContent = '';
+let lastEmgCheckTime = '';
+
+// =====================================================
+// 날짜/시간 시계 및 실시간 알람 동기화 (00초 락 제거)
+// =====================================================
+const DAYS=['일','월','화','수','목','금','토'];
+function updateClock(){
+  const n=new Date();
+  const y=n.getFullYear(),mo=String(n.getMonth()+1).padStart(2,'0'),d=String(n.getDate()).padStart(2,'0');
+  const day=DAYS[n.getDay()];
+  const h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0'),s=String(n.getSeconds()).padStart(2,'0');
+  document.getElementById('hdrDate').textContent=`${y}.${mo}.${d} (${day})`;
+  document.getElementById('hdrTime').textContent=`${h}:${m}:${s}`;
+  
+  // s==='00' 제한을 제거하여 테스트 반응 속도를 즉시형으로 향상 (중복은 firedAlarms에서 영구 차단)
+  checkAlarmTick(n);
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// =====================================================
+// Web Audio 알람음 (브라우저 정책 우회를 위한 단일 컨텍스트 관리)
+// =====================================================
+const SOUNDS=[
+  {id:'k1', name:'KORAIL 출발음', emoji:'🚆'},
+  {id:'k2', name:'분당선 도착음', emoji:'🎵'},
+  {id:'k3', name:'경보음 (삐삐삐)', emoji:'🔔'},
+  {id:'bell', name:'기본 알람음', emoji:'⏰'},
+];
+
+let globalAudioCtx = null;
+let curSound='k1';
+let previewNode=null;
+let alarmPlaying=false;
+let alarmIntervalId=null;
+
+// 브라우저 및 하이브리드 웹뷰 오디오 락 해제
+function initAudio() {
+  if (!globalAudioCtx) {
+    globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (globalAudioCtx.state === 'suspended') {
+    globalAudioCtx.resume();
+  }
+}
+
+const SOUND_PATTERNS={
+  k1:[[440,0,0.15],[554,0.2,0.15],[659,0.4,0.15],[880,0.6,0.4],[659,1.1,0.2],[880,1.4,0.5]],
+  k2:[[523,0,0.2],[659,0.25,0.2],[784,0.5,0.25],[1047,0.8,0.4],[784,1.3,0.2],[523,1.6,0.4]],
+  k3:[[1200,0,0.1],[1200,0.18,0.1],[1200,0.36,0.1],[1200,0.54,0.1],[1200,0.72,0.1]],
+  bell:[[830,0,0.08],[830,0.1,0.08],[1046,0.25,0.5],[830,0.85,0.08],[830,0.95,0.08],[1046,1.1,0.6]],
+};
+
+function playPattern(patternId, volume=1.0, onEnd=null){
+  initAudio(); // 미디어 자생 권한 취득 확인
+  const ctx = globalAudioCtx;
+  const master=ctx.createGain(); master.gain.value=volume; master.connect(ctx.destination);
+  const pat=SOUND_PATTERNS[patternId]||SOUND_PATTERNS.bell;
+  let maxEnd=0;
+  let nodes=[];
+
+  pat.forEach(([freq,start,dur])=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(master);
+    o.frequency.value=freq; o.type='sine';
+    const t=ctx.currentTime+start;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.9,t+0.03);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.start(t); o.stop(t+dur+0.05);
+    nodes.push(o);
+    maxEnd=Math.max(maxEnd,t+dur+0.05);
+  });
+  const delay=(maxEnd-ctx.currentTime+0.1)*1000;
+  if(onEnd) setTimeout(onEnd, delay);
+  return { 
+    stop:()=>{ 
+      nodes.forEach(o => { try { o.stop(); } catch (e) {} }); 
+      try { master.disconnect(); } catch (e) {} 
+    } 
+  };
+}
+
+function playEmgSound(){
+  playPattern('k3',1.0);
+}
+
+function previewSound(id){
+  stopPreview();
+  const btn=document.getElementById('spbtn_'+id);
+  if(btn){ btn.textContent='⏹'; btn.classList.add('playing'); }
+  previewNode=playPattern(id,1.0,()=>{
+    if(btn){ btn.textContent='▶'; btn.classList.remove('playing'); }
+    previewNode=null;
+  });
+}
+
+function stopPreview(){
+  document.querySelectorAll('.sound-play').forEach(b=>{b.textContent='▶';b.classList.remove('playing');});
+  if(previewNode){ previewNode.stop(); previewNode=null; }
+}
+
+function selectSound(id){
+  curSound=id;
+  document.querySelectorAll('.sound-option').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('sopt_'+id)?.classList.add('selected');
+}
+
+// =====================================================
+// 알람 체크 
+// =====================================================
+let firedAlarms=new Set();
+
+function checkAlarmTick(now){
+  const hh=String(now.getHours()).padStart(2,'0');
+  const mm=String(now.getMinutes()).padStart(2,'0');
+  const nowStr=`${hh}:${mm}`;
+  MEM.alarms.forEach(a=>{
+    const fireKey=a.id+'_'+nowStr;
+    if(a.alarmTime===nowStr && !firedAlarms.has(fireKey)){
+      firedAlarms.add(fireKey);
+      fireAlarm(a);
+    }
+  });
+}
+
+function fireAlarm(a){
+  document.getElementById('apDia').textContent=`다이아 ${a.diamond} · ${a.dtype}`;
+  document.getElementById('apLabel').textContent=a.label+(a.showDir&&a.direction?` (${a.direction})`:'');
+  document.getElementById('apTime').textContent=fmt24(a.alarmTime);
+  document.getElementById('alarmPopup').classList.add('show');
+
+  alarmPlaying=true;
+  let count=0;
+  function playNext(){
+    if(!alarmPlaying||count>=3) return;
+    count++;
+    playPattern(curSound,1.0, ()=>{ if(alarmPlaying) setTimeout(playNext,400); });
+  }
+  playNext();
+
+  if(Notification.permission==='granted'){
+    new Notification('🔔 분당승무 알람',{
+      body:`${a.label} · ${a.alarmTime}`,
+      icon:'./icons/icon-192x192.png',
+      requireInteraction:true,
+    });
+  }
+}
+
+function stopAlarm(){
+  alarmPlaying=false;
+  document.getElementById('alarmPopup').classList.remove('show');
+}
+
+// =====================================================
+// 알림 권한
+// =====================================================
+function checkNotifPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='default')
+    document.getElementById('notifBanner').style.display='block';
+}
+async function requestNotif(){
+  const p=await Notification.requestPermission();
+  document.getElementById('notifBanner').style.display='none';
+  toast(p==='granted'?'✅ 알림이 허용되었습니다':'⚠️ 알림 허용이 필요합니다');
+}
+
+// =====================================================
+// 설정 UI
+// =====================================================
+const SET_DEFS=[
+  {key:'출근',    label:'출근시각',    def:60, max:180},
+  {key:'도중출무', label:'도중출무',   def:10, max:60},
+  {key:'보정교대', label:'보정역 교대',def:20, max:60},
+  {key:'보정편승', label:'보정역 편승',def:20, max:60},
+  {key:'사리교대', label:'사리역 교대',def:10, max:60},
+  {key:'기지교대', label:'기지 교대',  def:15, max:60},
+  {key:'왕십리',  label:'왕십리 출고', def:40, max:120},
+  {key:'고색',    label:'고색 출고',   def:40, max:120},
+  {key:'기지출고', label:'기지 출고',  def:40, max:120},
+];
+
+function buildSetRows(){
+  const s=MEM.settings;
+  document.getElementById('setRows').innerHTML=SET_DEFS.map(d=>`
+    <div class="set-row">
+      <div><div class="set-lbl">${d.label}</div><div class="set-sub">기본 ${d.def}분 전</div></div>
+      <div style="display:flex;align-items:center;gap:3px;">
+        <input type="number" class="set-input" id="si_${d.key}" value="${s[d.key]||d.def}" min="1" max="${d.max}">
+        <span style="font-size:11px;color:var(--GR);">분 전</span>
+      </div>
+    </div>`).join('');
+}
+
+function buildSoundList(){
+  document.getElementById('soundList').innerHTML=SOUNDS.map(s=>`
+    <div class="sound-option ${s.id===curSound?'selected':''}" id="sopt_'+s.id+'" onclick="selectSound('${s.id}')">
+      <div class="sound-left">
+        <span style="font-size:20px;">${s.emoji}</span>
+        <span class="sound-name">${s.name}</span>
+      </div>
+      <button class="sound-play" id="spbtn_${s.id}" onclick="event.stopPropagation();previewSound('${s.id}')">▶</button>
+    </div>`).join('');
+}
+
+function getCurS(){
+  const s={};
+  SET_DEFS.forEach(d=>{const el=document.getElementById('si_'+d.key);s[d.key]=el?parseInt(el.value)||d.def:d.def;});
+  s.sound=curSound; return s;
+}
+function applyS(s){
+  if(!s)return;
+  SET_DEFS.forEach(d=>{const el=document.getElementById('si_'+d.key);if(el&&s[d.key])el.value=s[d.key];});
+  if(s.sound){curSound=s.sound;buildSoundList();}
+}
+async function saveSettings(){
+  const s=getCurS();
+  MEM.settings=s;
+  initAudio(); // 저장 시 권한 검증 추가
+  await api('saveSettings',{settings:s});
+  toast('✅ 설정이 저장되었습니다');
+}
+
+// =====================================================
+// 시각 유틸
+// =====================================================
+function subMin(t,m){if(!t)return'--:--';const[h,mn]=t.split(':').map(Number);let x=h*60+mn-m;if(x<0)x+=1440;return`${String(Math.floor(x/60)%24).padStart(2,'0')}:${String(x%60).padStart(2,'0')}`;}
+function fmt24(t){if(!t||t==='--:--')return'--:--';const[h,m]=t.split(':').map(Number);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
+function dirB(dir,show){if(!show||!dir)return'';return`<span class="${dir==='상행'?'up-badge':'dn-badge'}">${dir}</span>`;}
+function remainStr(alarmTime){
+  const now=new Date();
+  const[h,m]=alarmTime.split(':').map(Number);
+  let diff=h*60+m-(now.getHours()*60+now.getMinutes());
+  if(diff<0)diff+=1440;
+  if(diff===0)return'지금!';
+  const rh=Math.floor(diff/60),rm=diff%60;
+  return rh>0?`${rh}시간 ${rm}분 후`:`${rm}분 후`;
+}
+
+// =====================================================
+// 다이아 입력
+// =====================================================
+const AMETA={
+  '왕십리출고':{color:'#FF6F00',label:'왕십리 출고',off:'왕십리',showDir:false},
+  '고색출고':  {color:'#E65100',label:'고색 출고',  off:'고색',  showDir:false},
+  '기지출고':  {color:'#BF360C',label:'기지 출고',  off:'기지출고',showDir:false},
+  '기지교대':  {color:'#6A1B9A',label:'기지 교대',  off:'기지교대',showDir:false},
+  '보정역교대':{color:'#1565C0',label:'보정역 교대',off:'보정교대',showDir:true},
+  '보정역편승':{color:'#4527A0',label:'보정역 편승',off:'보정편승',showDir:true},
+  '사리역교대':{color:'#00695C',label:'사리역 교대',off:'사리교대',showDir:true},
+  '사리역편승':{color:'#01579B',label:'사리역 편승',off:'사리교대',showDir:true},
+  '편승':      {color:'#2E7D32',label:'편승',        off:'보정편승',showDir:false},
+};
+
+let curPrev=[],diaT=null;
+function onDiaInput(val){clearTimeout(diaT);val=String(val).trim();if(val.length>=3)diaT=setTimeout(()=>fetchDia(val),500);else clearPrev();}
+function clearPrev(){curPrev=[];document.getElementById('typeBadge').innerHTML='';document.getElementById('alarmPrev').innerHTML='<div class="no-prev">다이아 번호를 입력하면<br>알람이 미리 표시됩니다</div>';document.getElementById('setAlarmWrap').style.display='none';document.getElementById('androidAlarmBox').style.display='none';}
+
+async function fetchDia(val){
+  const badge=document.getElementById('typeBadge'),prev=document.getElementById('alarmPrev'),btnW=document.getElementById('setAlarmWrap');
+  curPrev=[];
+  prev.innerHTML=`<div style="text-align:center;padding:20px;color:var(--GR);"><span class="spinner"></span>조회 중...</div>`;
+  const res=await api('getDiamondData',{diamondNo:val});
+  if(!res.success){badge.innerHTML=`<span style="color:var(--RD);font-size:12px;">⚠ ${res.message||'존재하지 않는 다이아 번호'}</span>`;prev.innerHTML=`<div class="no-prev" style="color:var(--RD);">유효하지 않은 다이아 번호입니다</div>`;btnW.style.display='none';return;}
+  const data=res.data;
+  badge.innerHTML=`<span class="badge-y">${data.type}</span>`;
+  const s=getCurS();let html='';
+  const chkA=subMin(data.checkin,s.출근);
+  html+=prevItem('출근시각','#E65100',`${s.출근}분 전`,chkA,data.checkin,'',null,false);
+  curPrev.push({label:'출근시각',color:'#E65100',alarmTime:chkA,realTime:data.checkin,diamond:val,dtype:data.type,direction:null,trainNo:null,showDir:false});
+  (data.alarms||[]).forEach(a=>{
+    const m=AMETA[a.type];if(!m)return;
+    const off=a.offsetKey==='박출고'?10:(s[m.off]||20);
+    const subLbl=a.offsetKey==='박출고'?'출고준비 10분 전':`${off}분 전`;
+    const at=subMin(a.time,off);
+    html+=prevItem(m.label,m.color,subLbl,at,a.time,a.trainNo||'',a.direction,m.showDir);
+    curPrev.push({label:m.label,color:m.color,alarmTime:at,realTime:a.time,diamond:val,dtype:data.type,direction:a.direction,trainNo:a.trainNo,showDir:m.showDir});
+  });
+  prev.innerHTML=html||'<div class="no-prev">알람 항목이 없습니다</div>';
+  btnW.style.display=curPrev.length?'block':'none';
+}
+
+function prevItem(label,color,subLbl,at,rt,tn,dir,show){
+  return`<div class="alarm-prev-item"><div class="acolor-dot" style="background:${color};"></div><div class="ainfo"><div class="ainfo-title">${label}${dirB(dir,show)}</div><div class="ainfo-sub">${subLbl} · 실제 ${rt||'--:--'}${tn?' · '+tn:''}</div></div><div style="text-align:right;flex-shrink:0;"><div class="atime">${fmt24(at)}</div></div></div>`;
+}
+
+// =====================================================
+// 알람 설정/목록 (버튼 입력 시 기기 오디오 잠금 해제)
+// =====================================================
+function setAlarms(){
+  if(!curPrev.length)return;
+  
+  initAudio(); // 사용자가 [알람 설정하기] 명시적 클릭 시 오디오 Context 권한 영구 취득
+  
+  MEM.alarms=curPrev.map(a=>({...a,id:'a_'+Date.now()+Math.random()}));
+  firedAlarms.clear();
+  renderList();
+  toast(`✅ ${MEM.alarms.length}개 알람 설정 완료`);
+  goTab('list',1);
+  api('replaceAlarms',{alarms:MEM.alarms}).catch(()=>{});
+  document.getElementById('diaInput').value='';
+  document.getElementById('androidAlarmBox').style.display='block';
+  clearPrev(); curPrev=[];
+}
+
+function renderList(){
+  const el=document.getElementById('alarmList'),badge=document.getElementById('cntBadge');
+  badge.textContent=MEM.alarms.length;
+  if(!MEM.alarms.length){el.innerHTML='<div class="empty"><div class="empty-ico">🔕</div><div style="font-size:13px;">설정된 알람이 없습니다</div></div>';return;}
+  el.innerHTML=MEM.alarms.map(a=>{
+    const remain=remainStr(a.alarmTime);
+    const soon=remain!=='지금!'&&remain.includes('분 후')&&parseInt(remain)<30;
+    return`<div class="alarm-list-item">
+      <div class="acolor-bar" style="background:${a.color};"></div>
+      <div class="ali-left">
+        <div class="ali-dia">다이아 ${a.diamond} · ${a.dtype}</div>
+        <div class="ali-title">${a.label}${dirB(a.direction,a.showDir)}</div>
+        <div class="ali-time">${fmt24(a.alarmTime)}</div>
+        <div class="ali-real">실제: ${a.realTime||'--:--'}${a.trainNo&&a.trainNo!=='null'?' · '+a.trainNo:''}</div>
+        <div class="ali-remain ${soon?'soon':''}">${remain}</div>
+      </div>
+      <button class="btn-rd" onclick="delAlarm('${a.id}')">삭제</button>
+    </div>`;
+  }).join('');
+}
+
+function delAlarm(id){MEM.alarms=MEM.alarms.filter(a=>a.id!==id);renderList();api('deleteAlarm',{alarmId:id}).catch(()=>{});toast('알람이 삭제되었습니다');}
+function clearAll(){if(!MEM.alarms.length)return;if(!confirm('모든 알람을 삭제하시겠습니까?'))return;MEM.alarms=[];renderList();api('deleteAllAlarms').catch(()=>{});toast('전체 알람이 삭제되었습니다');}
+
+// =====================================================
+// 사규
+// =====================================================
+function openReg(type){
+  const titles={고장조치:'전기동차 고장조치 매뉴얼',비상대응:'비상대응 매뉴얼',안내방송:'안내방송 매뉴얼',운전취급:'운전취급 규정'};
+  document.getElementById('regModalTitle').textContent=titles[type]||type;
+  document.getElementById('regModal').classList.add('show');
+  api('getRegulation',{category:type}).then(r=>{if(r.success&&r.content)document.getElementById('regModalBody').innerHTML=`<div style="font-size:14px;line-height:1.8;">${r.content.replace(/\n/g,'<br>')}</div>`;}).catch(()=>{});
+}
+
+// =====================================================
+// 자위소방대
+// =====================================================
+async function searchFire(){
+  const name=document.getElementById('fireNameInput').value.trim();
+  if(!name){toast('이름을 입력하세요');return;}
+  const res=document.getElementById('fireResult');
+  res.innerHTML=`<div style="text-align:center;padding:20px;"><span class="spinner"></span>조회 중...</div>`;
+  const r=await api('getFireDuty',{name}).catch(()=>({success:false}));
+  if(!r.success||!r.data){res.innerHTML='<div style="text-align:center;padding:20px;color:var(--RD);font-size:13px;">조회된 정보가 없습니다</div>';return;}
+  const d=r.data;
+  res.innerHTML=`<div style="background:var(--WH);border-radius:var(--R);overflow:hidden;border:0.5px solid #e8e8e8;"><div style="background:var(--Y);padding:10px 14px;font-size:14px;font-weight:800;">🔥 ${d.name} 님의 자위소방 임무</div>${d.imageUrl?`<div style="padding:14px;text-align:center;"><img src="${d.imageUrl}" style="max-width:100%;border-radius:8px;"></div>`:''}<div style="padding:12px 14px;font-size:14px;line-height:1.7;">${d.duty||''}</div></div>`;
+}
+
+// =====================================================
+// 네비게이션
+// =====================================================
+const TABS=['alarm','list','settings','rules','fire'];
+function goTab(tab,idx){
+  TABS.forEach(t=>{document.getElementById('sc-'+t).classList.remove('active');document.getElementById('nav-'+t).classList.remove('active');});
+  document.getElementById('sc-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+  const p=idx>=3?1:0;
+  document.getElementById('dot0').classList.toggle('active',p===0);
+  document.getElementById('dot1').classList.toggle('active',p===1);
+  if(tab==='list')renderList();
+  if(tab!=='settings')stopPreview();
+}
+document.getElementById('navScroll').addEventListener('scroll',function(){
+  const p=this.scrollLeft>this.clientWidth*0.8?1:0;
+  document.getElementById('dot0').classList.toggle('active',p===0);
+  document.getElementById('dot1').classList.toggle('active',p===1);
+});
+
+// =====================================================
+// 관리자
+// =====================================================
+function openAdmin(){document.getElementById('adminOv').classList.add('show');document.getElementById('adminLogin').style.display='block';document.getElementById('adminDash').style.display='none';document.getElementById('pwInput').value='';}
+function closeAdmin(){document.getElementById('adminOv').classList.remove('show');}
+async function doAdminLogin(){
+  const pw=document.getElementById('pwInput').value;
+  const r=await api('adminLogin',{password:pw});
+  if(r.success){adminPw=pw;document.getElementById('adminLogin').style.display='none';document.getElementById('adminDash').style.display='block';loadStats();loadEmgLog();}
+  else toast('❌ 비밀번호가 올바르지 않습니다');
+}
+async function loadStats(){const r=await api('adminStats',{password:adminPw});if(r.success){document.getElementById('stUsers').textContent=r.stats.totalUsers;document.getElementById('stToday').textContent=r.stats.todayActive;document.getElementById('stWeek').textContent=r.stats.weekActive;document.getElementById('stAlarms').textContent=r.stats.totalAlarms;}}
+async function loadEmgLog(){const r=await api('getEmergencyLog',{password:adminPw});if(r.success&&r.logs?.length)document.getElementById('emgLog').innerHTML=r.logs.slice(0,10).map(l=>`<div class="log-item"><div class="log-date">${l.sent_at}</div><div class="log-msg">${l.content}</div></div>`).join('');}
+async function sendEmergency(){
+  const msg=document.getElementById('emgMsg').value.trim();
+  if(!msg){toast('메시지를 입력하세요');return;}
+  const r=await api('sendEmergency',{password:adminPw,content:msg});
+  if(r.success){
+    document.getElementById('emgMsg').value='';
+    closeAdmin();
+    toast('📢 발송 완료');
+    loadEmgLog();
+  } else toast('❌ 발송 실패');
+}
+
+// =====================================================
+// 긴급메시지 - 중복 발송 차단 로직 적용
+// =====================================================
+function showEmgPopup(msg){
+  document.getElementById('emgPopupMsg').textContent=msg;
+  document.getElementById('emgPopup').classList.add('show');
+  let cnt=0;
+  function beepNext(){
+    if(cnt>=3)return;
+    cnt++;
+    playPattern('k3',1.0,()=>setTimeout(beepNext,300));
+  }
+  beepNext();
+  if(Notification.permission==='granted'){
+    new Notification('🚨 긴급 메시지',{body:msg,icon:'./icons/icon-192x192.png',requireInteraction:true});
+  }
+}
+function closeEmgPopup(){document.getElementById('emgPopup').classList.remove('show');}
+
+async function checkEmergency(){
+  try{
+    const r=await api('getEmergency',{lastChecked:lastEmgCheckTime});
+    if(r.success && r.message){
+      const msgId=String(r.message.msg_id||r.message.sent_at||'');
+      const content=r.message.content||'';
+      
+      // ID 및 본문 텍스트가 모두 기존과 다를 때만 팝업 실행 (텍스트 기반 무한 반복 예방구조)
+      if(content && (msgId!==lastShownEmgId && content!==lastShownEmgContent)){
+        lastShownEmgId=msgId;
+        lastShownEmgContent=content;
+        lastEmgCheckTime=r.message.sent_at;
+        showEmgPopup(content);
+      }
+    }
+  }catch(e){}
+}
+
+// =====================================================
+// API
+// =====================================================
+async function api(action,params={}){
+  try{
+    const res=await fetch(
