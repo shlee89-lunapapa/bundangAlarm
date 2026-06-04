@@ -1,11 +1,16 @@
-// 분당승무 Service Worker
-const CACHE_NAME = 'bundang-v28';
+const CACHE_NAME = 'bundang-v2';
 const CACHE_FILES = [
   './',
   './index.html',
   './manifest.json',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
+  './sounds/sound1.mp3',
+  './sounds/sound2.mp3',
+  './sounds/sound3.mp3',
+  './sounds/sound4.mp3',
+  './sounds/sound5.mp3',
+  './sounds/sound6.mp3',
 ];
 
 self.addEventListener('install', e => {
@@ -25,10 +30,7 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // GAS API 요청은 캐시 안함 (항상 네트워크)
-  if (e.request.url.includes('script.google.com')) {
-    return;
-  }
+  if (e.request.url.includes('script.google.com')) return;
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
