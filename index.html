@@ -181,8 +181,8 @@ html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto San
     <div class="screen active" id="sc-alarm">
       <div id="notifBanner" style="display:none;">
         <div class="notif-banner">
-          <div class="notif-txt">🔔 앱이 열려있을 때 알람이 울립니다.<br>알림 허용 시 잠금화면 알림도 가능합니다.</div>
-          <button class="notif-btn" onclick="requestNotif()">허용</button>
+          <div class="notif-txt">🔔 알람 알림 권한을 허용하면<br>잠금화면·상단바 알림도 표시됩니다.</div>
+          <button class="notif-btn" onclick="requestNotif()">권한 허용</button>
         </div>
       </div>
       <div class="sec-label">다이아 번호 입력</div>
@@ -359,14 +359,37 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyslisHO5xnO7iCqxr5ljFB
 
 let USER_ID = (() => {
   try {
-    let id = sessionStorage.getItem('bds_uid');
-    if (!id) { id='u_'+Date.now()+'_'+Math.random().toString(36).substr(2,8); sessionStorage.setItem('bds_uid',id); }
+    let id = localStorage.getItem('bds_uid');
+    if (!id) { id='u_'+Date.now()+'_'+Math.random().toString(36).substr(2,8); localStorage.setItem('bds_uid',id); }
     return id;
   } catch(e) { return 'u_'+Date.now(); }
 })();
 
 let adminPw = '';
 let MEM = { settings:{}, alarms:[] };
+
+// localStorage에 알람 저장
+function saveAlarmsLocal(){
+  try{ localStorage.setItem('bds_alarms', JSON.stringify(MEM.alarms)); }catch(e){}
+}
+// localStorage에서 알람 복원
+function loadAlarmsLocal(){
+  try{
+    const saved = localStorage.getItem('bds_alarms');
+    if(saved){ MEM.alarms = JSON.parse(saved); }
+  }catch(e){}
+}
+// localStorage에 설정 저장
+function saveSettingsLocal(){
+  try{ localStorage.setItem('bds_settings', JSON.stringify(MEM.settings)); }catch(e){}
+}
+// localStorage에서 설정 복원
+function loadSettingsLocal(){
+  try{
+    const saved = localStorage.getItem('bds_settings');
+    if(saved){ MEM.settings = JSON.parse(saved); }
+  }catch(e){}
+}
 
 // 긴급메시지 중복 방지 - 마지막으로 표시한 msg_id 저장
 let lastShownEmgId = '';
@@ -515,23 +538,31 @@ function fireAlarm(a){
   document.getElementById('apTime').textContent=fmt24(a.alarmTime);
   document.getElementById('alarmPopup').classList.add('show');
 
-  // 알람음 최대 볼륨으로 재생
+  // 알람음 최대 볼륨으로 반복 재생 (해제 버튼 누를때까지)
   alarmPlaying=true;
   unlockAudio();
   const sound = SOUNDS.find(s=>s.id===curSound);
   if(sound){
-    alarmAudioObj = new Audio(sound.src);
-    alarmAudioObj.volume = 1.0;
-    alarmAudioObj.loop = false;
-    alarmAudioObj.play().catch(e=>console.log('알람 재생 오류:',e));
+    function playAlarmLoop(){
+      if(!alarmPlaying) return;
+      alarmAudioObj = new Audio(sound.src);
+      alarmAudioObj.volume = 1.0;
+      alarmAudioObj.play().catch(e=>console.log('알람 재생 오류:',e));
+      alarmAudioObj.onended = ()=>{ if(alarmPlaying) setTimeout(playAlarmLoop, 500); };
+    }
+    playAlarmLoop();
   }
 
-  // 브라우저 알림 (잠금화면)
+  // 브라우저 알림 (잠금화면/상단 배너)
   if(Notification.permission==='granted'){
     new Notification('🔔 분당승무 알람',{
-      body:`${a.label} · ${a.alarmTime}`,
+      body:`다이아 ${a.diamond} · ${a.label} · ${a.alarmTime}`,
       icon:'./icons/icon-192x192.png',
+      badge:'./icons/icon-96x96.png',
       requireInteraction:true,
+      vibrate:[500,200,500,200,500],
+      tag:'bundang-alarm',
+      renotify:true,
     });
   }
 }
@@ -604,7 +635,7 @@ function applyS(s){
   SET_DEFS.forEach(d=>{const el=document.getElementById('si_'+d.key);if(el&&s[d.key])el.value=s[d.key];});
   if(s.sound){curSound=s.sound;buildSoundList();}
 }
-async function saveSettings(){const s=getCurS();MEM.settings=s;await api('saveSettings',{settings:s});toast('✅ 설정이 저장되었습니다');}
+async function saveSettings(){const s=getCurS();MEM.settings=s;saveSettingsLocal();await api('saveSettings',{settings:s});toast('✅ 설정이 저장되었습니다');}
 
 // =====================================================
 // 시각 유틸
@@ -675,6 +706,7 @@ function prevItem(label,color,subLbl,at,rt,tn,dir,show){
 function setAlarms(){
   if(!curPrev.length)return;
   MEM.alarms=curPrev.map(a=>({...a,id:'a_'+Date.now()+Math.random()}));
+  saveAlarmsLocal();
   scheduleAlarms();
   renderList();
   toast(`✅ ${MEM.alarms.length}개 알람 설정 완료`);
@@ -707,8 +739,8 @@ function renderList(){
   }).join('');
 }
 
-function delAlarm(id){MEM.alarms=MEM.alarms.filter(a=>a.id!==id);renderList();api('deleteAlarm',{alarmId:id}).catch(()=>{});toast('알람이 삭제되었습니다');}
-function clearAll(){if(!MEM.alarms.length)return;if(!confirm('모든 알람을 삭제하시겠습니까?'))return;MEM.alarms=[];renderList();api('deleteAllAlarms').catch(()=>{});toast('전체 알람이 삭제되었습니다');}
+function delAlarm(id){MEM.alarms=MEM.alarms.filter(a=>a.id!==id);saveAlarmsLocal();scheduleAlarms();renderList();api('deleteAlarm',{alarmId:id}).catch(()=>{});toast('알람이 삭제되었습니다');}
+function clearAll(){if(!MEM.alarms.length)return;if(!confirm('모든 알람을 삭제하시겠습니까?'))return;MEM.alarms=[];saveAlarmsLocal();scheduleAlarms();renderList();api('deleteAllAlarms').catch(()=>{});toast('전체 알람이 삭제되었습니다');}
 
 // =====================================================
 // 사규
@@ -838,12 +870,21 @@ setInterval(()=>{if(document.getElementById('sc-list').classList.contains('activ
 // =====================================================
 async function init(){
   buildSetRows(); buildSoundList(); checkNotifPermission();
+
+  // ① localStorage에서 먼저 즉시 복원 (앱 껐다 켜도 알람 유지)
+  loadAlarmsLocal();
+  loadSettingsLocal();
+  if(MEM.alarms.length){ scheduleAlarms(); renderList(); }
+  if(Object.keys(MEM.settings).length){ applyS(MEM.settings); buildSetRows(); }
+
+  // ② GAS 서버와 백그라운드 동기화
   api('registerUser',{deviceInfo:navigator.userAgent.substr(0,80)}).catch(()=>{});
   const sr=await api('getSettings').catch(()=>null);
-  if(sr?.success&&sr.settings){MEM.settings=sr.settings;applyS(sr.settings);}
+  if(sr?.success&&sr.settings){MEM.settings=sr.settings;saveSettingsLocal();applyS(sr.settings);}
   const ar=await api('getAlarms').catch(()=>null);
   if(ar?.success&&ar.alarms?.length){
     MEM.alarms=ar.alarms.map(a=>({id:a.alarm_id,label:a.alarm_label,color:Object.values(AMETA).find(m=>m.label===a.alarm_label)?.color||'#999',alarmTime:a.alarm_time,realTime:a.real_time,diamond:a.diamond_no,dtype:a.diamond_type,direction:a.direction,trainNo:a.train_no,showDir:['보정역 교대','보정역 편승','사리역 교대','사리역 편승'].includes(a.alarm_label)}));
+    saveAlarmsLocal();
     scheduleAlarms();
     renderList();
   }
