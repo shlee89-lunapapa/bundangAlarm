@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bundang-v2';
+const CACHE_NAME = 'bundang-v3';
 const CACHE_FILES = [
   './',
   './index.html',
