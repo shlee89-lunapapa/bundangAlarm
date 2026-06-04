@@ -391,12 +391,12 @@ updateClock();
 // Web Audio 알람음 (음원 파일 불필요 - 코드로 생성)
 // =====================================================
 const SOUNDS=[
-  {id:'sound1', name:'광역철도 도착음',    emoji:'🚉', src:'./sounds/sound1.mp3'},
-  {id:'sound2', name:'광역철도 출발음',    emoji:'🚆', src:'./sounds/sound2.mp3'},
-  {id:'sound3', name:'출입문 닫힘 경고음', emoji:'🚪', src:'./sounds/sound3.mp3'},
-  {id:'sound4', name:'코레일 상행 진입음', emoji:'⬆️', src:'./sounds/sound4.mp3'},
-  {id:'sound5', name:'코레일 하행 진입음', emoji:'⬇️', src:'./sounds/sound5.mp3'},
-  {id:'sound6', name:'통과열차 진입음',    emoji:'⚡', src:'./sounds/sound6.mp3'},
+  {id:'sound1', name:'광역철도 도착음',    emoji:'🚉', src:'./sounds/광역철도 도착음.mp3'},
+  {id:'sound2', name:'광역철도 출발음',    emoji:'🚆', src:'./sounds/광역철도 출발음.mp3'},
+  {id:'sound3', name:'출입문 닫힘 경고음', emoji:'🚪', src:'./sounds/출입문 닫힘 경고음.mp3'},
+  {id:'sound4', name:'코레일 상행 진입음', emoji:'⬆️', src:'./sounds/코레일 상행 진입음.mp3'},
+  {id:'sound5', name:'코레일 하행 진입음', emoji:'⬇️', src:'./sounds/코레일 하행 진입음.mp3'},
+  {id:'sound6', name:'통과열차 진입음',    emoji:'⚡', src:'./sounds/통과열차 진입음.mp3'},
 ];
 let curSound='sound1';
 let previewNode=null;
@@ -770,7 +770,7 @@ function showEmgPopup(msg){
   function emgBeepNext(){
     if(emgCount>=3)return;
     emgCount++;
-    const emgAudio=new Audio('./sounds/sound3.mp3');
+    const emgAudio=new Audio('./sounds/출입문 닫힘 경고음.mp3');
     emgAudio.volume=1.0;
     emgAudio.play().catch(()=>{});
     emgAudio.onended=()=>setTimeout(emgBeepNext,300);
