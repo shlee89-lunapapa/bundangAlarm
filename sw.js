@@ -5,12 +5,12 @@ const CACHE_FILES = [
   './manifest.json',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
-  './sounds/sound1.mp3',
-  './sounds/sound2.mp3',
-  './sounds/sound3.mp3',
-  './sounds/sound4.mp3',
-  './sounds/sound5.mp3',
-  './sounds/sound6.mp3',
+  './sounds/광역철도 도착음.mp3',
+  './sounds/광역철도 출발음.mp3',
+  './sounds/출입문 닫힘 경고음.mp3',
+  './sounds/코레일 상행 진입음.mp3',
+  './sounds/코레일 하행 진입음.mp3',
+  './sounds/통과열차 진입음.mp3',
 ];
 
 self.addEventListener('install', e => {
