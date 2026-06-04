@@ -402,6 +402,18 @@ let curSound='sound1';
 let previewNode=null;
 let alarmPlaying=false;
 let alarmAudioObj=null;
+let audioUnlocked=false;
+
+// 오디오 잠금 해제 (첫 터치 시 AudioContext 활성화)
+function unlockAudio(){
+  if(audioUnlocked) return;
+  audioUnlocked=true;
+  const ctx=new(window.AudioContext||window.webkitAudioContext)();
+  const buf=ctx.createBuffer(1,1,22050);
+  const src=ctx.createBufferSource();
+  src.buffer=buf; src.connect(ctx.destination); src.start(0);
+  ctx.resume().then(()=>{ ctx.close(); });
+}
 let alarmIntervalId=null;
 
 // 각 알람음 패턴 정의 (freq, startSec, durSec)
@@ -441,6 +453,7 @@ function playEmgSound(){
 }
 
 function previewSound(id){
+  unlockAudio();
   stopPreview();
   const sound = SOUNDS.find(s=>s.id===id);
   if(!sound) return;
@@ -448,7 +461,12 @@ function previewSound(id){
   if(btn){ btn.textContent='⏹'; btn.classList.add('playing'); }
   previewNode = new Audio(sound.src);
   previewNode.volume = 1.0;
-  previewNode.play().catch(e=>console.log('재생 오류:',e));
+  previewNode.play().catch(e=>{
+    // 재생 실패 시 버튼 원래대로
+    if(btn){ btn.textContent='▶'; btn.classList.remove('playing'); }
+    previewNode=null;
+    toast('⚠️ 재생 실패. 다시 눌러보세요.');
+  });
   previewNode.onended = ()=>{
     if(btn){ btn.textContent='▶'; btn.classList.remove('playing'); }
     previewNode=null;
@@ -499,10 +517,12 @@ function fireAlarm(a){
 
   // 알람음 최대 볼륨으로 재생
   alarmPlaying=true;
+  unlockAudio();
   const sound = SOUNDS.find(s=>s.id===curSound);
   if(sound){
     alarmAudioObj = new Audio(sound.src);
     alarmAudioObj.volume = 1.0;
+    alarmAudioObj.loop = false;
     alarmAudioObj.play().catch(e=>console.log('알람 재생 오류:',e));
   }
 
@@ -839,6 +859,10 @@ async function init(){
   setInterval(checkEmergency,30000);
 }
 init();
+
+// 첫 터치/클릭 시 오디오 잠금 해제
+document.addEventListener('touchstart', unlockAudio, {once:true});
+document.addEventListener('click', unlockAudio, {once:true});
 </script>
 
 <script>
