@@ -932,6 +932,10 @@ function startPowerWarning(endTimeStr, label) {
 
 function showPowerScreen() {
   document.getElementById('powerScreen').classList.add('show');
+  // 진동 패턴: 500ms 진동 - 200ms 쉬고 - 500ms 진동 - 200ms 쉬고 - 500ms 진동 (3회 반복)
+  if (navigator.vibrate) {
+    navigator.vibrate([500,200,500,200,500,200,500,200,500]);
+  }
 }
 
 function closePowerScreen() {
@@ -939,7 +943,7 @@ function closePowerScreen() {
   // 5분 후 다시 표시
   const t = setTimeout(() => {
     // 아직 운전 중인지 확인
-    if (powerTimers.length > 0) showPowerScreen();
+    if (powerTimers.length > 0) showPowerScreen(); // 진동도 포함
   }, 5 * 60 * 1000);
   powerTimers.push(t);
 }
