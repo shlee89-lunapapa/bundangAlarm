@@ -160,6 +160,15 @@ html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto San
 /* 토스트 */
 .toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:600;opacity:0;transition:all 0.25s;z-index:900;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* 전원차단 안내 전체화면 */
+.power-screen{display:none;position:fixed;inset:0;background:#111;z-index:850;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+.power-screen.show{display:flex;}
+.power-ico{font-size:80px;margin-bottom:24px;animation:powerBlink 1s infinite;}
+@keyframes powerBlink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.power-title{font-size:28px;font-weight:900;color:#FFD600;text-align:center;line-height:1.4;margin-bottom:16px;}
+.power-sub{font-size:16px;color:#aaa;text-align:center;line-height:1.6;margin-bottom:40px;}
+.power-close{padding:14px 36px;background:none;border:2px solid #555;border-radius:10px;font-size:14px;font-weight:700;color:#777;cursor:pointer;}
+.power-close:active{background:#222;}
 </style>
 </head>
 <body>
@@ -337,6 +346,14 @@ html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto San
     <div class="alarm-t" id="apTime"></div>
     <button class="btn-alarm-stop" onclick="stopAlarm()">🔕 알람 끄기</button>
   </div>
+</div>
+
+<!-- 전원차단 안내 전체화면 -->
+<div class="power-screen" id="powerScreen">
+  <div class="power-ico">📵</div>
+  <div class="power-title">휴대전화<br>전원을 차단하세요</div>
+  <div class="power-sub" id="powerSubTxt">열차 운전 중입니다</div>
+  <button class="power-close" onclick="closePowerScreen()">닫기</button>
 </div>
 
 <!-- 긴급메시지 팝업 -->
@@ -531,7 +548,9 @@ function scheduleAlarms() {
   });
 }
 
+let currentFiredAlarm = null;
 function fireAlarm(a){
+  currentFiredAlarm = a; // 현재 울리는 알람 저장
   // 팝업 표시
   document.getElementById('apDia').textContent=`다이아 ${a.diamond} · ${a.dtype}`;
   document.getElementById('apLabel').textContent=a.label+(a.showDir&&a.direction?` (${a.direction})`:'');
@@ -571,6 +590,22 @@ function stopAlarm(){
   alarmPlaying=false;
   if(alarmAudioObj){ alarmAudioObj.pause(); alarmAudioObj.currentTime=0; alarmAudioObj=null; }
   document.getElementById('alarmPopup').classList.remove('show');
+
+  // 출근시각 제외한 알람이면 → realTime에 전원차단 안내 예약
+  if(currentFiredAlarm && currentFiredAlarm.label !== '출근시각') {
+    const a = currentFiredAlarm;
+    const endTime = a.endTime || null;
+    // realTime 시각에 전원차단 안내 시작
+    if (a.realTime && a.realTime !== '--:--') {
+      const [h, m] = a.realTime.split(':').map(Number);
+      const now = new Date();
+      const triggerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+      let ms = triggerDate.getTime() - now.getTime();
+      if (ms < 0) ms = 0; // 이미 지났으면 즉시
+      setTimeout(() => startPowerWarning(endTime, a.label), ms);
+    }
+  }
+  currentFiredAlarm = null;
 }
 
 // =====================================================
@@ -596,7 +631,7 @@ const SET_DEFS=[
   {key:'보정교대', label:'보정역 교대',def:20, max:60},
   {key:'보정편승', label:'보정역 편승',def:20, max:60},
   {key:'사리교대', label:'사리역 교대',def:10, max:60},
-  {key:'기지교대', label:'기지 교대',  def:15, max:60},
+  {key:'기지교대', label:'기지 교대',  def:20, max:60},
   {key:'왕십리',  label:'왕십리 출고', def:40, max:120},
   {key:'고색',    label:'고색 출고',   def:40, max:120},
   {key:'기지출고', label:'기지 출고',  def:40, max:120},
@@ -657,15 +692,14 @@ function remainStr(alarmTime){
 // 다이아 입력
 // =====================================================
 const AMETA={
-  '왕십리출고':{color:'#FF6F00',label:'왕십리 출고',off:'왕십리',showDir:false},
-  '고색출고':  {color:'#E65100',label:'고색 출고',  off:'고색',  showDir:false},
+  '왕십리출고':{color:'#FF6F00',label:'왕십리 출고',off:'왕십리',  showDir:false},
+  '고색출고':  {color:'#E65100',label:'고색 출고',  off:'고색',    showDir:false},
   '기지출고':  {color:'#BF360C',label:'기지 출고',  off:'기지출고',showDir:false},
   '기지교대':  {color:'#6A1B9A',label:'기지 교대',  off:'기지교대',showDir:false},
-  '보정역교대':{color:'#1565C0',label:'보정역 교대',off:'보정교대',showDir:true},
-  '보정역편승':{color:'#4527A0',label:'보정역 편승',off:'보정편승',showDir:true},
-  '사리역교대':{color:'#00695C',label:'사리역 교대',off:'사리교대',showDir:true},
-  '사리역편승':{color:'#01579B',label:'사리역 편승',off:'사리교대',showDir:true},
-  '편승':      {color:'#2E7D32',label:'편승',        off:'보정편승',showDir:false},
+  '보정역교대':{color:'#1565C0',label:'보정역 교대',off:'보정교대', showDir:true},
+  '보정역편승':{color:'#4527A0',label:'보정역 편승',off:'보정편승', showDir:true},
+  '사리역교대':{color:'#00695C',label:'사리역 교대',off:'사리교대', showDir:true},
+  '사리역편승':{color:'#01579B',label:'사리역 편승',off:'사리교대', showDir:true},
 };
 
 let curPrev=[],diaT=null;
@@ -683,14 +717,14 @@ async function fetchDia(val){
   const s=getCurS();let html='';
   const chkA=subMin(data.checkin,s.출근);
   html+=prevItem('출근시각','#E65100',`${s.출근}분 전`,chkA,data.checkin,'',null,false);
-  curPrev.push({label:'출근시각',color:'#E65100',alarmTime:chkA,realTime:data.checkin,diamond:val,dtype:data.type,direction:null,trainNo:null,showDir:false});
+  curPrev.push({label:'출근시각',color:'#E65100',alarmTime:chkA,realTime:data.checkin,endTime:null,diamond:val,dtype:data.type,direction:null,trainNo:null,showDir:false});
   (data.alarms||[]).forEach(a=>{
     const m=AMETA[a.type];if(!m)return;
     const off=a.offsetKey==='박출고'?10:(s[m.off]||20);
     const subLbl=a.offsetKey==='박출고'?'출고준비 10분 전':`${off}분 전`;
     const at=subMin(a.time,off);
     html+=prevItem(m.label,m.color,subLbl,at,a.time,a.trainNo||'',a.direction,m.showDir);
-    curPrev.push({label:m.label,color:m.color,alarmTime:at,realTime:a.time,diamond:val,dtype:data.type,direction:a.direction,trainNo:a.trainNo,showDir:m.showDir});
+    curPrev.push({label:m.label,color:m.color,alarmTime:at,realTime:a.time,endTime:a.endTime||null,diamond:val,dtype:data.type,direction:a.direction,trainNo:a.trainNo,showDir:m.showDir});
   });
   prev.innerHTML=html||'<div class="no-prev">알람 항목이 없습니다</div>';
   btnW.style.display=curPrev.length?'block':'none';
@@ -708,6 +742,8 @@ function setAlarms(){
   MEM.alarms=curPrev.map(a=>({...a,id:'a_'+Date.now()+Math.random()}));
   saveAlarmsLocal();
   scheduleAlarms();
+  // 네이티브 앱이면 Android AlarmManager에도 등록
+  registerNativeAlarms();
   renderList();
   toast(`✅ ${MEM.alarms.length}개 알람 설정 완료`);
   goTab('list',1);
@@ -739,8 +775,26 @@ function renderList(){
   }).join('');
 }
 
-function delAlarm(id){MEM.alarms=MEM.alarms.filter(a=>a.id!==id);saveAlarmsLocal();scheduleAlarms();renderList();api('deleteAlarm',{alarmId:id}).catch(()=>{});toast('알람이 삭제되었습니다');}
-function clearAll(){if(!MEM.alarms.length)return;if(!confirm('모든 알람을 삭제하시겠습니까?'))return;MEM.alarms=[];saveAlarmsLocal();scheduleAlarms();renderList();api('deleteAllAlarms').catch(()=>{});toast('전체 알람이 삭제되었습니다');}
+function delAlarm(id){
+  // 네이티브 알람 취소
+  if(window.AndroidAlarm) try{ window.AndroidAlarm.cancelAlarm(id); }catch(e){}
+  MEM.alarms=MEM.alarms.filter(a=>a.id!==id);
+  saveAlarmsLocal();scheduleAlarms();renderList();
+  api('deleteAlarm',{alarmId:id}).catch(()=>{});
+  toast('알람이 삭제되었습니다');
+}
+function clearAll(){
+  if(!MEM.alarms.length)return;
+  if(!confirm('모든 알람을 삭제하시겠습니까?'))return;
+  // 네이티브 알람 전체 취소
+  if(window.AndroidAlarm) try{
+    const ids=JSON.stringify(MEM.alarms.map(a=>a.id));
+    window.AndroidAlarm.cancelAllAlarms(ids);
+  }catch(e){}
+  MEM.alarms=[];saveAlarmsLocal();scheduleAlarms();renderList();
+  api('deleteAllAlarms').catch(()=>{});
+  toast('전체 알람이 삭제되었습니다');
+}
 
 // =====================================================
 // 사규
@@ -862,19 +916,83 @@ async function api(action,params={}){
 
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
+// =====================================================
+// 전원차단 안내 기능
+// =====================================================
+let powerTimers = [];      // 5분 반복 타이머
+let powerEndTimer = null;  // 종료 타이머
+
+function startPowerWarning(endTimeStr, label) {
+  clearPowerWarning(); // 기존 타이머 초기화
+  document.getElementById('powerSubTxt').textContent =
+    `${label} 운전 중 · 종료: ${endTimeStr||'--:--'}`;
+  showPowerScreen();
+  schedulePowerEnd(endTimeStr);
+}
+
+function showPowerScreen() {
+  document.getElementById('powerScreen').classList.add('show');
+}
+
+function closePowerScreen() {
+  document.getElementById('powerScreen').classList.remove('show');
+  // 5분 후 다시 표시
+  const t = setTimeout(() => {
+    // 아직 운전 중인지 확인
+    if (powerTimers.length > 0) showPowerScreen();
+  }, 5 * 60 * 1000);
+  powerTimers.push(t);
+}
+
+function schedulePowerEnd(endTimeStr) {
+  if (!endTimeStr || endTimeStr === '--:--') return;
+  const [h, m] = endTimeStr.split(':').map(Number);
+  const now = new Date();
+  const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+  let ms = endDate.getTime() - now.getTime();
+  if (ms < 0) ms += 86400000;
+  powerEndTimer = setTimeout(() => clearPowerWarning(), ms);
+}
+
+function clearPowerWarning() {
+  powerTimers.forEach(t => clearTimeout(t));
+  powerTimers = [];
+  if (powerEndTimer) { clearTimeout(powerEndTimer); powerEndTimer = null; }
+  document.getElementById('powerScreen').classList.remove('show');
+}
+
 // 목록 남은시간 1분마다 갱신
 setInterval(()=>{if(document.getElementById('sc-list').classList.contains('active'))renderList();},60000);
 
 // =====================================================
 // 초기화
 // =====================================================
+// 네이티브 앱(Android)에 알람 등록
+function registerNativeAlarms(){
+  if(!window.AndroidAlarm) return; // 웹앱 환경이면 스킵
+  MEM.alarms.forEach(a => {
+    try {
+      window.AndroidAlarm.setAlarm(JSON.stringify({
+        id:        a.id,
+        label:     a.label,
+        alarmTime: a.alarmTime,
+        diamond:   a.diamond,
+        dtype:     a.dtype,
+        direction: a.direction || '',
+        realTime:  a.realTime || '',
+        endTime:   a.endTime  || '',
+      }));
+    } catch(e){ console.log('네이티브 알람 등록 오류:', e); }
+  });
+}
+
 async function init(){
   buildSetRows(); buildSoundList(); checkNotifPermission();
 
   // ① localStorage에서 먼저 즉시 복원 (앱 껐다 켜도 알람 유지)
   loadAlarmsLocal();
   loadSettingsLocal();
-  if(MEM.alarms.length){ scheduleAlarms(); renderList(); }
+  if(MEM.alarms.length){ scheduleAlarms(); registerNativeAlarms(); renderList(); }
   if(Object.keys(MEM.settings).length){ applyS(MEM.settings); buildSetRows(); }
 
   // ② GAS 서버와 백그라운드 동기화
