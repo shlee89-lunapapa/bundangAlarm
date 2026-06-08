@@ -161,14 +161,14 @@ html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto San
 .toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:600;opacity:0;transition:all 0.25s;z-index:900;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 /* 전원차단 안내 전체화면 */
-.power-screen{display:none;position:fixed;inset:0;background:#111;z-index:850;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+.power-screen{display:none;position:fixed;inset:0;background:#C62828;z-index:850;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
 .power-screen.show{display:flex;}
-.power-ico{font-size:80px;margin-bottom:24px;animation:powerBlink 1s infinite;}
-@keyframes powerBlink{0%,100%{opacity:1;}50%{opacity:0.3;}}
-.power-title{font-size:28px;font-weight:900;color:#FFD600;text-align:center;line-height:1.4;margin-bottom:16px;}
-.power-sub{font-size:16px;color:#aaa;text-align:center;line-height:1.6;margin-bottom:40px;}
-.power-close{padding:14px 36px;background:none;border:2px solid #555;border-radius:10px;font-size:14px;font-weight:700;color:#777;cursor:pointer;}
-.power-close:active{background:#222;}
+.power-ico{font-size:80px;margin-bottom:24px;animation:powerBlink 0.8s infinite;}
+@keyframes powerBlink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+.power-title{font-size:32px;font-weight:900;color:#fff;text-align:center;line-height:1.4;margin-bottom:16px;text-shadow:0 2px 8px rgba(0,0,0,0.3);}
+.power-sub{font-size:16px;color:rgba(255,255,255,0.8);text-align:center;line-height:1.6;margin-bottom:40px;}
+.power-close{padding:14px 36px;background:rgba(0,0,0,0.2);border:2px solid rgba(255,255,255,0.4);border-radius:10px;font-size:14px;font-weight:700;color:rgba(255,255,255,0.8);cursor:pointer;}
+.power-close:active{background:rgba(0,0,0,0.4);}
 </style>
 </head>
 <body>
