@@ -969,7 +969,18 @@ function renderDiamondStats(stats, total) {
     </div>`;
   }).join('');
 }
-async function loadEmgLog(){const r=await api('getEmergencyLog',{password:adminPw});if(r.success&&r.logs?.length)document.getElementById('emgLog').innerHTML=r.logs.slice(0,10).map(l=>`<div class="log-item"><div class="log-date">${l.sent_at}</div><div class="log-msg">${l.content}</div></div>`).join('');}
+async function loadEmgLog(){
+  const r=await api('getEmergencyLog',{password:adminPw});
+  if(r.success&&r.logs?.length){
+    document.getElementById('emgLog').innerHTML=r.logs.slice(0,10).map(l=>{
+      const date = l.sent_at || l['sent_at'] || '-';
+      const msg  = l.content  || l['content']  || '-';
+      return `<div class="log-item"><div class="log-date">${date}</div><div class="log-msg">${msg}</div></div>`;
+    }).join('');
+  } else {
+    document.getElementById('emgLog').innerHTML='<div style="text-align:center;padding:12px;color:#ccc;font-size:12px;">이력 없음</div>';
+  }
+}
 async function sendEmergency(){
   const msg=document.getElementById('emgMsg').value.trim();
   if(!msg){toast('메시지를 입력하세요');return;}
