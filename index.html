@@ -230,42 +230,7 @@ html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto San
       <div class="sec-label">사전 알람 시간 설정</div>
       <div id="setRows"></div>
       <div class="sec-label">알람음 선택 (▶ 눌러서 미리듣기)</div>
-      <!-- 분류 탭 -->
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button id="tabBuiltin" onclick="switchSoundTab('builtin')"
-          style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--YDK);background:var(--YDK);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">
-          🚆 기본 알람음
-        </button>
-        <button id="tabSystem" onclick="switchSoundTab('system')"
-          style="flex:1;padding:8px;border-radius:8px;border:2px solid #ddd;background:#fff;color:var(--GR);font-size:13px;font-weight:700;cursor:pointer;">
-          📱 폰 알람음
-        </button>
-      </div>
-      <!-- 기본 알람음 목록 -->
-      <div id="soundListBuiltin">
-        <div id="soundList"></div>
-      </div>
-      <!-- 폰 알람음 드롭다운 -->
-      <div id="soundListSystem" style="display:none;">
-        <div class="card">
-          <div style="font-size:13px;color:var(--GR);margin-bottom:10px;">폰에 설치된 알람음 목록</div>
-          <select id="systemSoundSelect" class="snd-select" onchange="onSystemSoundChange(this.value)"
-            style="margin-bottom:12px;">
-            <option value="">-- 알람음 선택 --</option>
-          </select>
-          <div style="display:flex;gap:8px;">
-            <button onclick="previewSystemSound()"
-              style="flex:1;padding:10px;background:var(--Y);border:2px solid var(--YD);border-radius:8px;font-size:13px;font-weight:700;color:var(--BK);cursor:pointer;">
-              ▶ 미리듣기
-            </button>
-            <button onclick="stopPreview()"
-              style="flex:1;padding:10px;background:#f0f0f0;border:2px solid #ddd;border-radius:8px;font-size:13px;font-weight:700;color:var(--GR);cursor:pointer;">
-              ⏹ 정지
-            </button>
-          </div>
-          <div id="selectedSystemSound" style="font-size:12px;color:var(--GR);margin-top:8px;text-align:center;"></div>
-        </div>
-      </div>
+      <div id="soundList"></div>
       <button class="save-btn" onclick="saveSettings()">💾 설정 저장</button>
     </div>
 
@@ -623,23 +588,17 @@ function fireAlarm(a){
   alarmPlaying=true;
   unlockAudio();
 
-  function playAlarmLoop(){
-    if(!alarmPlaying) return;
-    let src = null;
-    if(curSound.startsWith('system_')){
-      // 시스템 알람음
-      src = curSound.replace('system_', '');
-    } else {
-      const sound = SOUNDS.find(s=>s.id===curSound);
-      if(sound) src = sound.src;
+  const sound = SOUNDS.find(s=>s.id===curSound);
+  if(sound){
+    function playAlarmLoop(){
+      if(!alarmPlaying) return;
+      alarmAudioObj = new Audio(sound.src);
+      alarmAudioObj.volume = 1.0;
+      alarmAudioObj.play().catch(e=>console.log('알람 재생 오류:',e));
+      alarmAudioObj.onended = ()=>{ if(alarmPlaying) setTimeout(playAlarmLoop, 500); };
     }
-    if(!src) return;
-    alarmAudioObj = new Audio(src);
-    alarmAudioObj.volume = 1.0;
-    alarmAudioObj.play().catch(e=>console.log('알람 재생 오류:',e));
-    alarmAudioObj.onended = ()=>{ if(alarmPlaying) setTimeout(playAlarmLoop, 500); };
+    playAlarmLoop();
   }
-  playAlarmLoop();
 
   // 브라우저 알림 (잠금화면/상단 배너)
   if(Notification.permission==='granted'){
@@ -1040,91 +999,6 @@ async function api(action,params={}){
     const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,userId:USER_ID,...params})});
     return await res.json();
   }catch(e){return{success:false,message:e.toString()};}
-}
-
-// =====================================================
-// 알람음 탭 전환
-// =====================================================
-function switchSoundTab(tab) {
-  const btnBuiltin = document.getElementById('tabBuiltin');
-  const btnSystem  = document.getElementById('tabSystem');
-  const listBuiltin = document.getElementById('soundListBuiltin');
-  const listSystem  = document.getElementById('soundListSystem');
-
-  if (tab === 'builtin') {
-    btnBuiltin.style.background = 'var(--YDK)';
-    btnBuiltin.style.borderColor = 'var(--YDK)';
-    btnBuiltin.style.color = '#fff';
-    btnSystem.style.background = '#fff';
-    btnSystem.style.borderColor = '#ddd';
-    btnSystem.style.color = 'var(--GR)';
-    listBuiltin.style.display = 'block';
-    listSystem.style.display = 'none';
-    // 시스템 알람음 선택 해제
-    if (curSound.startsWith('system_')) {
-      curSound = 'sound1';
-      buildSoundList();
-    }
-  } else {
-    btnSystem.style.background = 'var(--YDK)';
-    btnSystem.style.borderColor = 'var(--YDK)';
-    btnSystem.style.color = '#fff';
-    btnBuiltin.style.background = '#fff';
-    btnBuiltin.style.borderColor = '#ddd';
-    btnBuiltin.style.color = 'var(--GR)';
-    listBuiltin.style.display = 'none';
-    listSystem.style.display = 'block';
-    loadSystemSounds();
-  }
-}
-
-// 시스템 알람음 목록 로드
-function loadSystemSounds() {
-  const select = document.getElementById('systemSoundSelect');
-  if (select.options.length > 1) return; // 이미 로드됨
-
-  // Android WebView에서 시스템 알람음 목록 요청
-  if (window.AndroidAlarm && window.AndroidAlarm.getAlarmSounds) {
-    try {
-      const json = window.AndroidAlarm.getAlarmSounds();
-      const sounds = JSON.parse(json);
-      sounds.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.uri;
-        opt.textContent = s.title;
-        select.appendChild(opt);
-      });
-      // 현재 선택된 시스템 알람음이 있으면 표시
-      if (curSound.startsWith('system_')) {
-        const uri = curSound.replace('system_', '');
-        select.value = uri;
-        updateSystemSoundLabel(uri, sounds);
-      }
-    } catch(e) {
-      select.innerHTML = '<option value="">폰 알람음을 불러올 수 없습니다</option>';
-    }
-  } else {
-    // 웹 환경 (GitHub Pages) - 안내 메시지
-    select.innerHTML = '<option value="">앱(APK)에서만 사용 가능합니다</option>';
-  }
-}
-
-function onSystemSoundChange(uri) {
-  if (!uri) return;
-  curSound = 'system_' + uri;
-  const select = document.getElementById('systemSoundSelect');
-  const label = select.options[select.selectedIndex]?.text || '';
-  document.getElementById('selectedSystemSound').textContent = '선택됨: ' + label;
-}
-
-function previewSystemSound() {
-  const uri = document.getElementById('systemSoundSelect').value;
-  if (!uri) { toast('알람음을 선택하세요'); return; }
-  stopPreview();
-  previewNode = new Audio(uri);
-  previewNode.volume = 1.0;
-  previewNode.play().catch(() => toast('미리듣기를 지원하지 않는 알람음입니다'));
-  previewNode.onended = () => { previewNode = null; };
 }
 
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
