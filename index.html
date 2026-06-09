@@ -946,9 +946,10 @@ async function sendEmergency(){
   const r=await api('sendEmergency',{password:adminPw,content:msg});
   if(r.success){
     document.getElementById('emgMsg').value='';
-    closeAdmin();
+    // 관리자 화면 유지 (닫지 않음)
     toast('📢 발송 완료');
-    loadEmgLog();
+    // 이력 즉시 갱신
+    await loadEmgLog();
   } else toast('❌ 발송 실패');
 }
 
