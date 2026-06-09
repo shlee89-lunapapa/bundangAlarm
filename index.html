@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>분당승무</title>
 <meta name="theme-color" content="#FFD600">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="분당승무">
@@ -23,7 +24,7 @@
 html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto Sans KR',sans-serif;}
 .app{display:flex;flex-direction:column;height:100vh;max-width:420px;margin:0 auto;background:var(--BG);position:relative;overflow:hidden;}
 /* 헤더 */
-.hdr{background:var(--Y);padding:10px 16px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:2px solid var(--YD);position:relative;}
+.hdr{background:var(--Y);padding:10px 16px 8px;padding-top:calc(10px + env(safe-area-inset-top, 0px));display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:2px solid var(--YD);position:relative;}
 .hdr-left{display:flex;align-items:center;gap:8px;z-index:1;}
 .hdr-icon{width:30px;height:30px;background:var(--BK);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
 .hdr-title{font-size:16px;font-weight:900;color:var(--BK);}
