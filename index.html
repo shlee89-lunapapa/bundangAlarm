@@ -1111,7 +1111,8 @@ async function sendEmergency(){
 // 긴급메시지 - 중복 방지 로직 개선
 // =====================================================
 function showEmgPopup(msg){
-  document.getElementById('emgPopupMsg').textContent=msg;
+  // 줄바꿈(\n) → <br> 변환
+  document.getElementById('emgPopupMsg').innerHTML=msg.replace(/\n/g,'<br>');
   document.getElementById('emgPopup').classList.add('show');
   // 긴급음 - 출입문 닫힘 경고음 3회 반복
   let emgCount=0;
