@@ -576,18 +576,7 @@ function scheduleAlarms() {
   scheduledTimers = [];
 
   const now = new Date();
-  // 설정 후 24시간 이내 알람만 유효 (야간 다이아 대응)
-  const validAlarms = MEM.alarms.filter(a => {
-    if (!a.setDate) return true; // setDate 없는 구버전 알람은 허용
-    const setTime = new Date(a.setDate).getTime();
-    const elapsed = now.getTime() - setTime;
-    return elapsed < 24 * 60 * 60 * 1000; // 24시간 이내
-  });
-  if (validAlarms.length !== MEM.alarms.length) {
-    MEM.alarms = validAlarms;
-    saveAlarmsLocal();
-    renderList();
-  }
+  // 알람은 사용자가 삭제할 때만 삭제 (24시간 자동 삭제 제거)
 
   MEM.alarms.forEach(a => {
     const [h, m] = a.alarmTime.split(':').map(Number);
@@ -1383,6 +1372,10 @@ async function init(){
     saveAlarmsLocal();
     scheduleAlarms();
     renderList();
+  }
+  // 앱 시작 시 저장된 알람 배너 표시 (앱 재시작 후에도 유지)
+  if(window.AndroidAlarm && MEM.alarms.length > 0) {
+    showNextAlarmBanner();
   }
   // 앱 시작 시각 기록 → 이후에 온 메시지만 표시
   const appStartTime = new Date().toISOString();
