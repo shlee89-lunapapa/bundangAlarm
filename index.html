@@ -722,7 +722,7 @@ function buildSetRows(){
         <input type="number" class="set-input" id="si_${d.key}"
           value="${s[d.key]||d.def}"
           min="${d.min||1}" max="${d.max}"
-          oninput="validateSetInput(this,'${d.key}')">
+          onblur="validateSetInput(this,'${d.key}')">
         <span style="font-size:11px;color:var(--GR);">분 전</span>
       </div>
     </div>`).join('');
