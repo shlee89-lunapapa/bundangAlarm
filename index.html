@@ -737,8 +737,56 @@ function saveSettings(){
   const s=getCurS();
   MEM.settings=s;
   saveSettingsLocal(); // 즉시 로컬 저장
-  toast('✅ 설정이 저장되었습니다'); // 즉시 토스트
+
+  // 설정된 알람이 있으면 새 설정값으로 즉시 재계산
+  if(MEM.alarms.length > 0) {
+    recalcAlarms(s);
+  }
+
+  toast('✅ 설정이 저장되었습니다');
   api('saveSettings',{settings:s}).catch(()=>{}); // GAS는 백그라운드
+}
+
+// 설정 변경 시 기존 알람 재계산
+function recalcAlarms(s) {
+  // 다이아별로 그룹핑 (같은 다이아 번호의 알람들)
+  const diamonds = [...new Set(MEM.alarms.map(a => a.diamond))];
+
+  diamonds.forEach(dno => {
+    const data = (typeof DIAMOND_DATA_LOCAL !== 'undefined') ? DIAMOND_DATA_LOCAL[dno] : null;
+    if (!data) return;
+
+    // 해당 다이아의 알람들 재계산
+    MEM.alarms = MEM.alarms.map(a => {
+      if (a.diamond !== dno) return a;
+
+      // 출근시각 재계산
+      if (a.label === '출근시각') {
+        const newAlarmTime = subMin(data.checkin, s.출근||60);
+        return {...a, alarmTime: newAlarmTime};
+      }
+
+      // 나머지 알람 재계산
+      const matchedEvent = (data.alarms||[]).find(ev => {
+        // realTime(출발시각)이 같은 이벤트 찾기
+        return ev.time === a.realTime && AMETA[ev.type]?.label === a.label;
+      });
+
+      if (!matchedEvent) return a;
+
+      const m = AMETA[matchedEvent.type];
+      if (!m) return a;
+      const off = matchedEvent.offsetKey === '박출고' ? 10 : (s[m.off] || 20);
+      const newAlarmTime = subMin(matchedEvent.time, off);
+      return {...a, alarmTime: newAlarmTime};
+    });
+  });
+
+  // 타이머 재예약 + 목록 갱신 + GAS 동기화
+  saveAlarmsLocal();
+  scheduleAlarms();
+  renderList();
+  api('replaceAlarms', {alarms: MEM.alarms}).catch(()=>{});
 }
 
 // =====================================================
