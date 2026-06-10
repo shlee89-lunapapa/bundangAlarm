@@ -1027,9 +1027,18 @@ document.getElementById('navScroll').addEventListener('scroll',function(){
 // 관리자
 // =====================================================
 function openMetro(){
-  // 네이티브 APK: AndroidAlarm 인터페이스로 앱 실행
-  if(window.AndroidAlarm && window.AndroidAlarm.openSubwayApp) {
+  // 디버그: AndroidAlarm 상태 확인
+  const hasAndroid = !!window.AndroidAlarm;
+  const hasMethod = hasAndroid && typeof window.AndroidAlarm.openSubwayApp === 'function';
+  console.log('AndroidAlarm:', hasAndroid, 'openSubwayApp:', hasMethod);
+
+  if(hasAndroid && hasMethod) {
     window.AndroidAlarm.openSubwayApp();
+    return;
+  }
+  // APK인데 메서드가 없으면 토스트로 알림
+  if(hasAndroid && !hasMethod) {
+    toast('앱 업데이트가 필요합니다 (재빌드 필요)');
     return;
   }
   // 웹앱: 플레이스토어로 이동
