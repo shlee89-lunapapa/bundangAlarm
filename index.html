@@ -1133,12 +1133,13 @@ function showEmgPopup(msg){
 function closeEmgPopup(){document.getElementById('emgPopup').classList.remove('show');}
 
 async function checkEmergency(){
+  // 관리자 로그인 상태면 팝업 스킵 (발송한 본인 단말기)
+  if(adminPw) return;
   try{
     const r=await api('getEmergency',{lastChecked:lastEmgCheckTime});
     if(r.success && r.message){
       const msgId = String(r.message.msg_id||'');
       const sentAt = String(r.message.sent_at||'');
-      // 새 메시지인지 확인 (msg_id 또는 sent_at 비교)
       if(msgId && msgId !== lastShownEmgId){
         lastShownEmgId = msgId;
         lastEmgCheckTime = sentAt;
