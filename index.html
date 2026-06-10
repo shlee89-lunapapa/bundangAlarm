@@ -875,9 +875,7 @@ function onDiaInput(val){
 }
 function clearPrev(){curPrev=[];document.getElementById('typeBadge').innerHTML='';document.getElementById('alarmPrev').innerHTML='<div class="no-prev">다이아 번호를 입력하면<br>알람이 미리 표시됩니다</div>';document.getElementById('setAlarmWrap').style.display='none';document.getElementById('androidAlarmBox').style.display='none';}
 
-let _lastFetchVal = null;
 async function fetchDia(val){
-  _lastFetchVal = val; // 현재 요청 값 저장
   const badge=document.getElementById('typeBadge'),prev=document.getElementById('alarmPrev'),btnW=document.getElementById('setAlarmWrap');
   curPrev=[];
 
@@ -898,9 +896,6 @@ async function fetchDia(val){
     }
     data = res.data;
   }
-
-  // 이전 요청이면 무시 (새 입력이 들어온 경우)
-  if(_lastFetchVal !== val) return;
 
   if(!data){
     badge.innerHTML=`<span style="color:var(--RD);font-size:12px;">⚠ 존재하지 않는 다이아 번호</span>`;
