@@ -1135,15 +1135,19 @@ async function checkEmergency(){
   try{
     const r=await api('getEmergency',{lastChecked:lastEmgCheckTime});
     if(r.success && r.message){
-      const msgId=String(r.message.msg_id||r.message.sent_at||'');
-      // msg_id 기준으로 중복 체크
-      if(msgId && msgId!==lastShownEmgId){
-        lastShownEmgId=msgId;
-        lastEmgCheckTime=r.message.sent_at;
+      const msgId = String(r.message.msg_id||'');
+      const sentAt = String(r.message.sent_at||'');
+      // 새 메시지인지 확인 (msg_id 또는 sent_at 비교)
+      if(msgId && msgId !== lastShownEmgId){
+        lastShownEmgId = msgId;
+        lastEmgCheckTime = sentAt;
+        showEmgPopup(r.message.content);
+      } else if(!msgId && sentAt && sentAt !== lastEmgCheckTime){
+        lastEmgCheckTime = sentAt;
         showEmgPopup(r.message.content);
       }
     }
-  }catch(e){}
+  }catch(e){ console.log('긴급메시지 체크 오류:', e); }
 }
 
 // =====================================================
@@ -1252,14 +1256,9 @@ async function init(){
     scheduleAlarms();
     renderList();
   }
-  // 앱 시작 시 최신 긴급메시지 ID 초기화 (표시 안 함)
-  try{
-    const r=await api('getEmergency',{lastChecked:''});
-    if(r.success&&r.message){
-      lastShownEmgId=String(r.message.msg_id||r.message.sent_at||'');
-      lastEmgCheckTime=r.message.sent_at;
-    }
-  }catch(e){}
+  // 앱 시작 시각 기록 → 이후에 온 메시지만 표시
+  const appStartTime = new Date().toISOString();
+  lastEmgCheckTime = appStartTime;
   // 이후 30초마다 새 긴급메시지만 체크
   setInterval(checkEmergency,30000);
 
