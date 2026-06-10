@@ -1070,8 +1070,15 @@ function goTab(tab,idx){
   if(tab==='fire'){
     setTimeout(()=>{
       const inp = document.getElementById('fireNameInput');
-      if(inp){ inp.blur(); inp.focus(); }
-    }, 100);
+      if(inp){
+        inp.blur();
+        inp.click();
+        inp.focus();
+        // 커서 끝으로 이동
+        const len = inp.value.length;
+        inp.setSelectionRange(len, len);
+      }
+    }, 300);
   }
 }
 document.getElementById('navScroll').addEventListener('scroll',function(){
