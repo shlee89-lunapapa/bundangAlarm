@@ -1027,15 +1027,13 @@ document.getElementById('navScroll').addEventListener('scroll',function(){
 // 관리자
 // =====================================================
 function openMetro(){
-  // 실시간 지하철 앱 실행 (설치 안 됐으면 스토어로)
+  // 네이티브 APK: AndroidAlarm 인터페이스로 앱 실행
   if(window.AndroidAlarm && window.AndroidAlarm.openSubwayApp) {
     window.AndroidAlarm.openSubwayApp();
     return;
   }
-  const ua=navigator.userAgent;
-  window.open(/iPhone|iPad/.test(ua)
-    ?'https://apps.apple.com/kr/app/%EC%8B%A4%EC%8B%9C%EA%B0%84-%EC%A7%80%ED%95%98%EC%B2%A0-%EC%BD%94%EB%A0%88%EC%9D%BC/id392512833'
-    :'intent://com.ganada.silsiganmetro#Intent;scheme=subway;package=com.ganada.silsiganmetro;end','_blank');
+  // 웹앱: 플레이스토어로 이동
+  window.open('https://play.google.com/store/apps/details?id=com.ganada.silsiganmetro','_blank');
 }
 
 function openAdmin(){document.getElementById('adminOv').classList.add('show');document.getElementById('adminLogin').style.display='block';document.getElementById('adminDash').style.display='none';document.getElementById('pwInput').value='';}
