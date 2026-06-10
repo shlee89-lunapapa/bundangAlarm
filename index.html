@@ -589,11 +589,30 @@ function scheduleAlarms() {
     scheduledTimers.push(t);
     console.log(`알람 예약: ${a.label} ${a.alarmTime} (${Math.round(ms/1000/60)}분 후)`);
   });
+  // APK 환경이면 네이티브 AlarmManager에도 등록
+  if(window.AndroidAlarm) registerNativeAlarms();;
 }
 
 let currentFiredAlarm = null;
 function fireAlarm(a){
-  currentFiredAlarm = a; // 현재 울리는 알람 저장
+  currentFiredAlarm = a;
+
+  // 네이티브 APK 환경이면 웹앱 알람 팝업/소리 스킵
+  // (AlarmManager가 네이티브로 처리하므로 중복 방지)
+  if(window.AndroidAlarm){
+    // 브라우저 알림만 표시 (상단 배너용)
+    if(Notification.permission==='granted'){
+      new Notification('🔔 분당승무 알람',{
+        body:`${a.label}${a.showDir&&a.direction?' ('+a.direction+')':''} · ${a.alarmTime}`,
+        icon:'./icons/icon-192x192.png',
+        badge:'./icons/icon-96x96.png',
+        requireInteraction:false,
+        tag:'bundang-alarm',
+      });
+    }
+    return; // 웹앱 팝업/소리는 스킵
+  }
+
   // 팝업 표시
   document.getElementById('apDia').textContent=`다이아 ${a.diamond} · ${a.dtype}`;
   document.getElementById('apLabel').textContent=a.label+(a.showDir&&a.direction?` (${a.direction})`:'');
