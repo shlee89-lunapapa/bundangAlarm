@@ -1003,14 +1003,18 @@ function openReg(type){
 // =====================================================
 // 임무명 → 이미지 파일명 매핑
 const FIRE_DUTY_IMAGES = {
-  '비상연락팀': './images/fire/비상연락팀.JPG',
-  '비상연락팀(지휘반)': './images/fire/비상연락팀.JPG',
-  '초기소화팀': './images/fire/초기소화팀.JPG',
-  '초기소화팀(진압반)': './images/fire/초기소화팀.JPG',
-  '피난유도팀': './images/fire/피난유도팀.JPG',
-  '피난유도팀(대피유도반)': './images/fire/피난유도팀.JPG',
-  '응급구조팀': './images/fire/응급구조팀.JPG',
-  '응급구조팀(구조구급반)': './images/fire/응급구조팀.JPG',
+  '비상연락팀': './images/fire/비상연락팀(지휘반).JPG',
+  '비상연락팀(지휘반)': './images/fire/비상연락팀(지휘반).JPG',
+  '비상연락팀 (지휘반)': './images/fire/비상연락팀(지휘반).JPG',
+  '초기소화팀': './images/fire/초기소화팀(진압반).JPG',
+  '초기소화팀(진압반)': './images/fire/초기소화팀(진압반).JPG',
+  '초기소화팀 (진압반)': './images/fire/초기소화팀(진압반).JPG',
+  '피난유도팀': './images/fire/피난유도팀(대피유도반).JPG',
+  '피난유도팀(대피유도반)': './images/fire/피난유도팀(대피유도반).JPG',
+  '피난유도팀 (대피유도반)': './images/fire/피난유도팀(대피유도반).JPG',
+  '응급구조팀': './images/fire/응급구조팀(구조구급반).JPG',
+  '응급구조팀(구조구급반)': './images/fire/응급구조팀(구조구급반).JPG',
+  '응급구조팀 (구조구급반)': './images/fire/응급구조팀(구조구급반).JPG',
   '방호안전팀': './images/fire/방호안전팀.JPG',
 };
 
@@ -1027,7 +1031,9 @@ async function searchFire(){
   const d=r.data;
   // 임무명 줄바꿈 제거 후 이미지 매핑
   const cleanDuty = (d.duty || '').replace(/\n/g, '').replace(/\r/g, '').trim();
-  const imgSrc = FIRE_DUTY_IMAGES[cleanDuty] || null;
+  // 괄호 앞 공백 제거한 버전도 매핑 시도
+  const cleanDuty2 = cleanDuty.replace(/\s*\(/g, '(');
+  const imgSrc = FIRE_DUTY_IMAGES[cleanDuty] || FIRE_DUTY_IMAGES[cleanDuty2] || null;
   res.innerHTML=`
     <div style="background:var(--WH);border-radius:var(--RS);overflow:hidden;border:0.5px solid #e8e8e8;">
       <div style="background:var(--Y);padding:12px 16px;">
