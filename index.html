@@ -1155,7 +1155,11 @@ function showEmgPopup(msg){
     new Notification('🚨 긴급 메시지',{body:msg,icon:'./icons/icon-192x192.png',requireInteraction:true});
   }
 }
-function closeEmgPopup(){document.getElementById('emgPopup').classList.remove('show');}
+function closeEmgPopup(){
+  document.getElementById('emgPopup').classList.remove('show');
+  // 확인한 메시지 ID를 localStorage에 저장 → 다시 안 뜨게
+  try{ localStorage.setItem('bds_last_emg_id', lastShownEmgId); }catch(e){}
+}
 
 async function checkEmergency(){
   // 관리자 로그인 상태면 팝업 스킵 (발송한 본인 단말기)
@@ -1286,6 +1290,11 @@ async function init(){
   // 앱 시작 시각 기록 → 이후에 온 메시지만 표시
   const appStartTime = new Date().toISOString();
   lastEmgCheckTime = appStartTime;
+  // 이미 확인한 메시지 ID 복원 (다시 안 뜨게)
+  try{
+    const savedId = localStorage.getItem('bds_last_emg_id');
+    if(savedId) lastShownEmgId = savedId;
+  }catch(e){}
   // 이후 30초마다 새 긴급메시지만 체크
   setInterval(checkEmergency,30000);
 
