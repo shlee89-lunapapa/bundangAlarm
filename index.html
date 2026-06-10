@@ -787,6 +787,15 @@ function saveSettings(){
     recalcAlarms(s);
   }
 
+  // 네이티브 APK에 선택된 알람음 URL 전달
+  if(window.AndroidAlarm && window.AndroidAlarm.setSoundUrl) {
+    const sound = SOUNDS.find(s2=>s2.id===curSound);
+    if(sound) {
+      const fullUrl = 'https://shlee89-lunapapa.github.io/bundangAlarm/' + sound.src.replace('./', '');
+      window.AndroidAlarm.setSoundUrl(fullUrl);
+    }
+  }
+
   toast('✅ 설정이 저장되었습니다');
   api('saveSettings',{settings:s}).catch(()=>{}); // GAS는 백그라운드
 }
@@ -1269,13 +1278,12 @@ function showNextAlarmBanner(){
 
   // 네이티브 서비스로 다음 알람 배너 전송
   try {
-    const intent = {
-      action: 'NEXT_ALARM',
-      next_label: nearest.label,
-      next_time: nearest.alarmTime
-    };
     if(window.AndroidAlarm.showNextAlarm){
-      window.AndroidAlarm.showNextAlarm(JSON.stringify(intent));
+      window.AndroidAlarm.showNextAlarm(JSON.stringify({
+        next_label:     nearest.label,
+        next_time:      nearest.alarmTime,
+        next_real_time: nearest.realTime || ''
+      }));
     }
   } catch(e) {}
 }
