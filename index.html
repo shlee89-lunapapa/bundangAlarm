@@ -1007,15 +1007,48 @@ function openReg(type){
 // =====================================================
 // 자위소방대
 // =====================================================
+// 임무명 → 이미지 파일명 매핑
+const FIRE_DUTY_IMAGES = {
+  '비상연락팀': './images/fire/비상연락팀.JPG',
+  '비상연락팀(지휘반)': './images/fire/비상연락팀.JPG',
+  '초기소화팀': './images/fire/초기소화팀.JPG',
+  '초기소화팀(진압반)': './images/fire/초기소화팀.JPG',
+  '피난유도팀': './images/fire/피난유도팀.JPG',
+  '피난유도팀(대피유도반)': './images/fire/피난유도팀.JPG',
+  '응급구조팀': './images/fire/응급구조팀.JPG',
+  '응급구조팀(구조구급반)': './images/fire/응급구조팀.JPG',
+  '방호안전팀': './images/fire/방호안전팀.JPG',
+};
+
 async function searchFire(){
   const name=document.getElementById('fireNameInput').value.trim();
   if(!name){toast('이름을 입력하세요');return;}
   const res=document.getElementById('fireResult');
   res.innerHTML=`<div style="text-align:center;padding:20px;"><span class="spinner"></span>조회 중...</div>`;
   const r=await api('getFireDuty',{name}).catch(()=>({success:false}));
-  if(!r.success||!r.data){res.innerHTML='<div style="text-align:center;padding:20px;color:var(--RD);font-size:13px;">조회된 정보가 없습니다</div>';return;}
+  if(!r.success||!r.data){
+    res.innerHTML='<div style="text-align:center;padding:20px;color:var(--RD);font-size:13px;">조회된 정보가 없습니다</div>';
+    return;
+  }
   const d=r.data;
-  res.innerHTML=`<div style="background:var(--WH);border-radius:var(--R);overflow:hidden;border:0.5px solid #e8e8e8;"><div style="background:var(--Y);padding:10px 14px;font-size:14px;font-weight:800;">🔥 ${d.name} 님의 자위소방 임무</div>${d.imageUrl?`<div style="padding:14px;text-align:center;"><img src="${d.imageUrl}" style="max-width:100%;border-radius:8px;"></div>`:''}<div style="padding:12px 14px;font-size:14px;line-height:1.7;">${d.duty||''}</div></div>`;
+  // 임무명으로 이미지 경로 결정
+  const imgSrc = FIRE_DUTY_IMAGES[d.duty] || null;
+  res.innerHTML=`
+    <div style="background:var(--WH);border-radius:var(--RS);overflow:hidden;border:0.5px solid #e8e8e8;">
+      <div style="background:var(--Y);padding:12px 16px;">
+        <div style="font-size:11px;color:#888;margin-bottom:2px;">자위소방 임무</div>
+        <div style="font-size:18px;font-weight:900;color:#111;">🔥 ${d.name} 님</div>
+      </div>
+      ${imgSrc ? `
+      <div style="padding:16px;text-align:center;background:#fafafa;">
+        <img src="${imgSrc}" style="max-width:100%;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.1);"
+          onerror="this.style.display='none';document.getElementById('imgErr').style.display='block';">
+        <div id="imgErr" style="display:none;color:#aaa;font-size:12px;padding:10px;">이미지를 불러올 수 없습니다</div>
+      </div>` : ''}
+      <div style="padding:14px 16px;font-size:16px;font-weight:700;color:#111;text-align:center;border-top:0.5px solid #eee;">
+        ${d.duty || '임무 미지정'}
+      </div>
+    </div>`;
 }
 
 // =====================================================
