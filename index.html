@@ -121,10 +121,10 @@ html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto San
 .fire-input:focus{border-color:var(--YDK);}
 .fire-btn{padding:12px 14px;background:var(--Y);border:2px solid var(--YD);border-radius:var(--RS);font-size:14px;font-weight:800;color:var(--BK);cursor:pointer;}
 /* 관리자 */
-.admin-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:400;align-items:flex-end;justify-content:center;}
+.admin-ov{display:none;position:fixed;inset:0;background:var(--WH);z-index:400;flex-direction:column;}
 .admin-ov.show{display:flex;}
-.admin-sheet{background:var(--WH);border-radius:20px 20px 0 0;width:100%;max-width:420px;padding:20px 18px 36px;max-height:92vh;overflow-y:auto;}
-.admin-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 18px;}
+.admin-sheet{flex:1;width:100%;max-width:420px;margin:0 auto;padding:0 18px 36px;overflow-y:auto;}
+.admin-handle{display:none;}
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
 .stat-card{background:var(--YL);border-radius:var(--RS);padding:12px;border:1px solid var(--YD);}
 .stat-num{font-size:26px;font-weight:900;color:var(--BK);}
@@ -141,6 +141,7 @@ html,body{height:100%;overflow:hidden;background:var(--BG);font-family:'Noto San
 .popup-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:800;align-items:center;justify-content:center;padding:20px;}
 .popup-ov.show{display:flex;}
 @keyframes popIn{from{transform:scale(0.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 /* 알람 팝업 */
 .alarm-box{background:var(--WH);border-radius:var(--R);padding:28px 20px;width:100%;max-width:320px;border-top:6px solid var(--YDK);text-align:center;animation:popIn 0.3s ease;}
 .alarm-ring-ico{font-size:52px;animation:ring 0.4s infinite alternate;}
@@ -315,6 +316,11 @@ const DIAMOND_DATA_LOCAL = {"17001": {"type": "평일주간", "checkin": "05:31"
 <div class="admin-ov" id="adminOv" onclick="if(event.target.id==='adminOv')closeAdmin()">
   <div class="admin-sheet">
     <div class="admin-handle"></div>
+    <!-- 관리자 상단 헤더 -->
+    <div style="position:sticky;top:0;background:var(--WH);padding:14px 0 10px;border-bottom:1px solid #eee;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;z-index:10;">
+      <div style="font-size:18px;font-weight:900;color:var(--BK);">📊 관리자 대시보드</div>
+      <button onclick="closeAdmin()" style="width:32px;height:32px;border-radius:50%;background:#f0f0f0;border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
     <div id="adminLogin">
       <div style="font-size:18px;font-weight:800;color:var(--BK);margin-bottom:4px;">🔐 관리자 모드</div>
       <div style="font-size:13px;color:var(--GR);margin-bottom:18px;">관리자 비밀번호를 입력하세요</div>
@@ -322,11 +328,11 @@ const DIAMOND_DATA_LOCAL = {"17001": {"type": "평일주간", "checkin": "05:31"
       <button class="pw-btn" onclick="doAdminLogin()">로그인</button>
     </div>
     <div id="adminDash" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div style="font-size:18px;font-weight:800;">📊 관리자 대시보드</div>
-        <button onclick="closeAdmin()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button>
+      <!-- 실시간 표시 -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--GN);display:inline-block;animation:pulse 1.5s infinite;"></span>
+        <span style="font-size:12px;color:var(--GR);">실시간 업데이트 중</span>
       </div>
-      <div style="font-size:12px;color:var(--GR);margin-bottom:14px;">분당승무 앱 현황</div>
       <!-- 통계 카드 -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
         <div class="stat-card" style="text-align:center;">
@@ -1055,21 +1061,26 @@ function renderDiamondStats(stats, total) {
     '휴일→평일야간':'#E65100','휴일→휴일야간':'#C62828',
     '도중출무':'#FF8F00'
   };
-  el.innerHTML = stats.map(d => {
-    // 활성률 = 오늘 설정한 수 / 해당 다이아 총 개수 × 100
-    const totalForType = DIAMOND_TOTAL[d.type] || 1;
-    const pct = Math.min(100, Math.round(d.count / totalForType * 100));
-    const color = colors[d.type] || '#999';
+  // 모든 다이아 타입을 표시 (0%도 포함)
+  const allTypes = Object.keys(DIAMOND_TOTAL);
+  const statsMap = {};
+  stats.forEach(d => statsMap[d.type] = d.count);
+
+  el.innerHTML = allTypes.map(type => {
+    const count = statsMap[type] || 0;
+    const totalForType = DIAMOND_TOTAL[type] || 1;
+    const pct = Math.min(100, Math.round(count / totalForType * 100));
+    const color = colors[type] || '#999';
     return `<div style="margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:5px;">
-        <span style="font-weight:700;color:var(--BK);">${d.type}</span>
-        <span style="color:var(--GR);">${d.count}/${totalForType}개 · <b style="color:${color};">${pct}%</b></span>
+        <span style="font-weight:600;color:var(--BK);">${type}</span>
+        <span style="color:var(--GR);">${count}/${totalForType}개 · <b style="color:${pct>0?color:'var(--GRL)'};">${pct}%</b></span>
       </div>
       <div style="background:#f0f0f0;border-radius:4px;height:10px;overflow:hidden;">
-        <div style="background:${color};width:${pct}%;height:100%;border-radius:4px;transition:width 0.8s ease;"></div>
+        <div style="background:${pct>0?color:'#e0e0e0'};width:${Math.max(pct,0.5)}%;height:100%;border-radius:4px;transition:width 0.8s ease;"></div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + '<div style="font-size:11px;color:var(--GRL);text-align:right;margin-top:4px;">오늘 알람 설정 기준</div>';
 }
 async function loadEmgLog(){
   const r=await api('getEmergencyLog',{password:adminPw});
@@ -1251,6 +1262,14 @@ async function init(){
   }catch(e){}
   // 이후 30초마다 새 긴급메시지만 체크
   setInterval(checkEmergency,30000);
+
+  // 관리자 대시보드 열려있으면 30초마다 통계 자동 갱신
+  setInterval(()=>{
+    if(adminPw && document.getElementById('adminDash').style.display !== 'none'){
+      loadStats();
+      loadEmgLog();
+    }
+  }, 30000);
 }
 init();
 
