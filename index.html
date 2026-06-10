@@ -1139,17 +1139,8 @@ function showEmgPopup(msg){
   // 줄바꿈(\n) → <br> 변환
   document.getElementById('emgPopupMsg').innerHTML=msg.replace(/\n/g,'<br>');
   document.getElementById('emgPopup').classList.add('show');
-  // 긴급음 - 출입문 닫힘 경고음 3회 반복
-  let emgCount=0;
-  function emgBeepNext(){
-    if(emgCount>=3)return;
-    emgCount++;
-    const emgAudio=new Audio('./sounds/출입문 닫힘 경고음.mp3');
-    emgAudio.volume=1.0;
-    emgAudio.play().catch(()=>{});
-    emgAudio.onended=()=>setTimeout(emgBeepNext,300);
-  }
-  emgBeepNext();
+  // 긴급메시지는 소리 없음 (FCM 진동으로 처리)
+  if(navigator.vibrate) navigator.vibrate([500,200,500]);
   // 브라우저 알림
   if(Notification.permission==='granted'){
     new Notification('🚨 긴급 메시지',{body:msg,icon:'./icons/icon-192x192.png',requireInteraction:true});
