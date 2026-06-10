@@ -689,27 +689,51 @@ async function requestNotif(){
 // 설정 UI
 // =====================================================
 const SET_DEFS=[
-  {key:'출근',    label:'출근시각',    def:60, max:180},
-  {key:'도중출무', label:'도중출무',   def:10, max:60},
-  {key:'보정교대', label:'보정역 교대',def:20, max:60},
-  {key:'보정편승', label:'보정역 편승',def:20, max:60},
-  {key:'사리교대', label:'사리역 교대',def:10, max:60},
-  {key:'기지교대', label:'기지 교대',  def:20, max:60},
-  {key:'왕십리',  label:'왕십리 출고', def:40, max:120},
-  {key:'고색',    label:'고색 출고',   def:40, max:120},
-  {key:'기지출고', label:'기지 출고',  def:40, max:120},
+  {key:'출근',    label:'출근시각',    def:60, min:1,  max:180, hint:''},
+  {key:'도중출무', label:'도중출무',   def:10, min:5,  max:60,  hint:'최소 5분'},
+  {key:'보정교대', label:'보정역 교대',def:20, min:15, max:60,  hint:'최소 15분'},
+  {key:'보정편승', label:'보정역 편승',def:20, min:15, max:60,  hint:'최소 15분'},
+  {key:'사리교대', label:'사리역 교대',def:10, min:5,  max:60,  hint:'최소 5분'},
+  {key:'기지교대', label:'기지 교대',  def:20, min:15, max:60,  hint:'최소 15분'},
+  {key:'왕십리',  label:'왕십리 출고', def:40, min:1,  max:120, hint:''},
+  {key:'고색',    label:'고색 출고',   def:40, min:1,  max:120, hint:''},
+  {key:'기지출고', label:'기지 출고',  def:40, min:30, max:120, hint:'최소 30분'},
 ];
 
 function buildSetRows(){
   const s=MEM.settings;
   document.getElementById('setRows').innerHTML=SET_DEFS.map(d=>`
     <div class="set-row">
-      <div><div class="set-lbl">${d.label}</div><div class="set-sub">기본 ${d.def}분 전</div></div>
+      <div>
+        <div class="set-lbl">${d.label}</div>
+        <div class="set-sub">기본 ${d.def}분 전${d.hint?' · <span style="color:#bbb;">'+d.hint+'</span>':''}</div>
+      </div>
       <div style="display:flex;align-items:center;gap:3px;">
-        <input type="number" class="set-input" id="si_${d.key}" value="${s[d.key]||d.def}" min="1" max="${d.max}">
+        <input type="number" class="set-input" id="si_${d.key}"
+          value="${s[d.key]||d.def}"
+          min="${d.min||1}" max="${d.max}"
+          oninput="validateSetInput(this,'${d.key}')">
         <span style="font-size:11px;color:var(--GR);">분 전</span>
       </div>
     </div>`).join('');
+}
+
+// 입력값 유효성 체크
+function validateSetInput(el, key) {
+  const def = SET_DEFS.find(d=>d.key===key);
+  if (!def) return;
+  const val = parseInt(el.value);
+  if (isNaN(val)) return;
+  if (val < def.min) {
+    el.value = def.min;
+    el.style.borderColor = 'var(--RD)';
+    toast(`⚠️ ${def.label}은 ${def.min}분 미만으로 설정할 수 없습니다`);
+    setTimeout(()=>{ el.style.borderColor=''; }, 2000);
+  } else if (val > def.max) {
+    el.value = def.max;
+  } else {
+    el.style.borderColor = '';
+  }
 }
 
 function buildSoundList(){
@@ -725,7 +749,14 @@ function buildSoundList(){
 
 function getCurS(){
   const s={};
-  SET_DEFS.forEach(d=>{const el=document.getElementById('si_'+d.key);s[d.key]=el?parseInt(el.value)||d.def:d.def;});
+  SET_DEFS.forEach(d=>{
+    const el=document.getElementById('si_'+d.key);
+    let val = el ? parseInt(el.value)||d.def : d.def;
+    // 최솟값 강제 적용
+    if (val < (d.min||1)) val = d.min||1;
+    if (val > d.max) val = d.max;
+    s[d.key]=val;
+  });
   s.sound=curSound; return s;
 }
 function applyS(s){
