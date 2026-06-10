@@ -1286,6 +1286,19 @@ async function init(){
     const savedId = localStorage.getItem('bds_last_emg_id');
     if(savedId) lastShownEmgId = savedId;
   }catch(e){}
+  // 앱 시작 시 현재 최신 메시지 ID 저장 (재설치 후 기존 메시지 팝업 방지)
+  try{
+    const r = await api('getEmergency', {lastChecked:''});
+    if(r.success && r.message) {
+      const msgId = String(r.message.msg_id || r.message.sent_at || '');
+      // localStorage에 저장된 ID가 없을 때만 (신규 설치 시)
+      const storedId = localStorage.getItem('bds_last_emg_id');
+      if(!storedId && msgId) {
+        lastShownEmgId = msgId;
+        localStorage.setItem('bds_last_emg_id', msgId);
+      }
+    }
+  }catch(e){}
   // 이후 30초마다 새 긴급메시지만 체크
   setInterval(checkEmergency,30000);
 
