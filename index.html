@@ -600,7 +600,10 @@ function scheduleAlarms() {
     console.log(`알람 예약: ${a.label} ${a.alarmTime} (${Math.round(ms/1000/60)}분 후)`);
   });
   // APK 환경이면 네이티브 AlarmManager에도 등록
-  if(window.AndroidAlarm) registerNativeAlarms();
+  if(window.AndroidAlarm) {
+    registerNativeAlarms();
+    showNextAlarmBanner();
+  }
 }
 
 let currentFiredAlarm = null;
@@ -1246,6 +1249,35 @@ async function api(action,params={}){
     const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,userId:USER_ID,...params})});
     return await res.json();
   }catch(e){return{success:false,message:e.toString()};}
+}
+
+// 다음 알람 상단 배너 표시 (APK 전용)
+function showNextAlarmBanner(){
+  if(!window.AndroidAlarm || !MEM.alarms.length) return;
+  // 가장 빠른 알람 찾기
+  const now = new Date();
+  let nearest = null;
+  let nearestMs = Infinity;
+  MEM.alarms.forEach(a => {
+    const [h,m] = a.alarmTime.split(':').map(Number);
+    const d = new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0,0);
+    if(d <= now) d.setDate(d.getDate()+1);
+    const ms = d.getTime() - now.getTime();
+    if(ms < nearestMs){ nearestMs=ms; nearest=a; }
+  });
+  if(!nearest) return;
+
+  // 네이티브 서비스로 다음 알람 배너 전송
+  try {
+    const intent = {
+      action: 'NEXT_ALARM',
+      next_label: nearest.label,
+      next_time: nearest.alarmTime
+    };
+    if(window.AndroidAlarm.showNextAlarm){
+      window.AndroidAlarm.showNextAlarm(JSON.stringify(intent));
+    }
+  } catch(e) {}
 }
 
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
