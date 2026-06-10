@@ -277,7 +277,7 @@ const DIAMOND_DATA_LOCAL = {"17001": {"type": "평일주간", "checkin": "05:31"
       <div class="card">
         <div style="font-size:12px;color:var(--GR);margin-bottom:10px;">이름을 입력하고 조회하세요. 본인 정보만 표시됩니다.</div>
         <div class="fire-row">
-          <input type="text" class="fire-input" id="fireNameInput" placeholder="이름 입력" maxlength="10" onkeydown="if(event.key==='Enter')searchFire()">
+          <input type="text" class="fire-input" id="fireNameInput" placeholder="이름 입력" maxlength="10" inputmode="text" autocomplete="off" onkeyup="if(event.key==='Enter')searchFire()">
           <button class="fire-btn" onclick="searchFire()">조회</button>
         </div>
       </div>
