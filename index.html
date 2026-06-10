@@ -861,17 +861,31 @@ const AMETA={
 };
 
 let curPrev=[],diaT=null;
-function onDiaInput(val){clearTimeout(diaT);val=String(val).trim();if(val.length>=3)diaT=setTimeout(()=>fetchDia(val),500);else clearPrev();}
+function onDiaInput(val){
+  clearTimeout(diaT);
+  val=String(val).trim();
+  if(val.length===5){
+    // 5자리 완성 시 즉시 조회
+    fetchDia(val);
+  } else if(val.length>=3){
+    diaT=setTimeout(()=>fetchDia(val),300);
+  } else {
+    clearPrev();
+  }
+}
 function clearPrev(){curPrev=[];document.getElementById('typeBadge').innerHTML='';document.getElementById('alarmPrev').innerHTML='<div class="no-prev">다이아 번호를 입력하면<br>알람이 미리 표시됩니다</div>';document.getElementById('setAlarmWrap').style.display='none';document.getElementById('androidAlarmBox').style.display='none';}
 
+let _lastFetchVal = null;
 async function fetchDia(val){
+  _lastFetchVal = val; // 현재 요청 값 저장
   const badge=document.getElementById('typeBadge'),prev=document.getElementById('alarmPrev'),btnW=document.getElementById('setAlarmWrap');
   curPrev=[];
 
   // 로컬 데이터 우선 조회 (즉시 표시, GAS 호출 불필요)
   let data = null;
-  if(typeof DIAMOND_DATA_LOCAL !== 'undefined' && DIAMOND_DATA_LOCAL[val]) {
-    data = DIAMOND_DATA_LOCAL[val];
+  const strVal = String(val).trim();
+  if(typeof DIAMOND_DATA_LOCAL !== 'undefined' && DIAMOND_DATA_LOCAL[strVal]) {
+    data = DIAMOND_DATA_LOCAL[strVal];
   } else {
     // 로컬에 없으면 GAS API 호출
     prev.innerHTML=`<div style="text-align:center;padding:20px;color:var(--GR);"><span class="spinner"></span>조회 중...</div>`;
@@ -884,6 +898,9 @@ async function fetchDia(val){
     }
     data = res.data;
   }
+
+  // 이전 요청이면 무시 (새 입력이 들어온 경우)
+  if(_lastFetchVal !== val) return;
 
   if(!data){
     badge.innerHTML=`<span style="color:var(--RD);font-size:12px;">⚠ 존재하지 않는 다이아 번호</span>`;
