@@ -562,9 +562,21 @@ function scheduleAlarms() {
   scheduledTimers = [];
 
   const now = new Date();
+  // 설정 후 24시간 이내 알람만 유효 (야간 다이아 대응)
+  const validAlarms = MEM.alarms.filter(a => {
+    if (!a.setDate) return true; // setDate 없는 구버전 알람은 허용
+    const setTime = new Date(a.setDate).getTime();
+    const elapsed = now.getTime() - setTime;
+    return elapsed < 24 * 60 * 60 * 1000; // 24시간 이내
+  });
+  if (validAlarms.length !== MEM.alarms.length) {
+    MEM.alarms = validAlarms;
+    saveAlarmsLocal();
+    renderList();
+  }
+
   MEM.alarms.forEach(a => {
     const [h, m] = a.alarmTime.split(':').map(Number);
-    // 오늘 알람 시각
     const alarmDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
     let ms = alarmDate.getTime() - now.getTime();
     // 이미 지난 시각이면 스킵
@@ -767,7 +779,10 @@ function prevItem(label,color,subLbl,at,rt,tn,dir,show){
 // =====================================================
 function setAlarms(){
   if(!curPrev.length)return;
-  MEM.alarms=curPrev.map(a=>({...a,id:'a_'+Date.now()+Math.random()}));
+  // 알람 설정 날짜 기록 (당일 유효성 체크용)
+  // 설정 시각 기록 (24시간 유효성 체크용)
+  const setDate = new Date().toISOString();
+  MEM.alarms=curPrev.map(a=>({...a,id:'a_'+Date.now()+Math.random(),setDate:setDate}));
   saveAlarmsLocal();
   scheduleAlarms();
   // 네이티브 앱이면 Android AlarmManager에도 등록
