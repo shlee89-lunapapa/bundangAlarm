@@ -188,7 +188,9 @@ const DIAMOND_DATA_LOCAL = {"17001": {"type": "평일주간", "checkin": "05:31"
       <div class="hdr-date" id="hdrDate"></div>
       <div class="hdr-time" id="hdrTime"></div>
     </div>
-    <button class="admin-btn" onclick="openAdmin()">관리자</button>
+    <button onclick="openMetro()" style="background:#111;border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" title="실시간 지하철">
+      🚇
+    </button>
   </div>
 
   <div class="content">
@@ -290,10 +292,12 @@ const DIAMOND_DATA_LOCAL = {"17001": {"type": "평일주간", "checkin": "05:31"
       <button class="nav-item" onclick="goTab('settings',2)" id="nav-settings"><span class="ni">⚙️</span><span class="nl">설정</span></button>
       <button class="nav-item" onclick="goTab('rules',3)" id="nav-rules"><span class="ni">📖</span><span class="nl">사규</span></button>
       <button class="nav-item" onclick="goTab('fire',4)" id="nav-fire"><span class="ni">🚒</span><span class="nl">자위소방대</span></button>
+      <button class="nav-item" onclick="openAdmin()" id="nav-admin"><span class="ni">🔐</span><span class="nl">관리자</span></button>
     </div>
     <div class="nav-dots">
       <div class="nav-dot active" id="dot0"></div>
       <div class="nav-dot" id="dot1"></div>
+      <div class="nav-dot" id="dot2"></div>
     </div>
   </div>
 </div>
@@ -1005,9 +1009,11 @@ function goTab(tab,idx){
   TABS.forEach(t=>{document.getElementById('sc-'+t).classList.remove('active');document.getElementById('nav-'+t).classList.remove('active');});
   document.getElementById('sc-'+tab).classList.add('active');
   document.getElementById('nav-'+tab).classList.add('active');
-  const p=idx>=3?1:0;
+  // 도트: 0=알람/목록/설정, 1=사규/자위소방대, 2=관리자
+  const p = idx<=2 ? 0 : idx<=4 ? 1 : 2;
   document.getElementById('dot0').classList.toggle('active',p===0);
   document.getElementById('dot1').classList.toggle('active',p===1);
+  document.getElementById('dot2').classList.toggle('active',p===2);
   if(tab==='list')renderList();
   if(tab!=='settings')stopPreview();
 }
@@ -1020,6 +1026,18 @@ document.getElementById('navScroll').addEventListener('scroll',function(){
 // =====================================================
 // 관리자
 // =====================================================
+function openMetro(){
+  // 실시간 지하철 앱 실행 (설치 안 됐으면 스토어로)
+  if(window.AndroidAlarm && window.AndroidAlarm.openSubwayApp) {
+    window.AndroidAlarm.openSubwayApp();
+    return;
+  }
+  const ua=navigator.userAgent;
+  window.open(/iPhone|iPad/.test(ua)
+    ?'https://apps.apple.com/kr/app/%EC%8B%A4%EC%8B%9C%EA%B0%84-%EC%A7%80%ED%95%98%EC%B2%A0-%EC%BD%94%EB%A0%88%EC%9D%BC/id392512833'
+    :'intent://com.ganada.silsiganmetro#Intent;scheme=subway;package=com.ganada.silsiganmetro;end','_blank');
+}
+
 function openAdmin(){document.getElementById('adminOv').classList.add('show');document.getElementById('adminLogin').style.display='block';document.getElementById('adminDash').style.display='none';document.getElementById('pwInput').value='';}
 function closeAdmin(){document.getElementById('adminOv').classList.remove('show');}
 async function doAdminLogin(){
