@@ -1204,8 +1204,10 @@ function closeEmgPopup(){
 }
 
 async function checkEmergency(){
-  // 관리자 로그인 상태면 팝업 스킵 (발송한 본인 단말기)
+  // 관리자 로그인 상태면 팝업 스킵
   if(adminPw) return;
+  // 네이티브 APK 환경이면 FCM이 처리하므로 웹앱 팝업 스킵
+  if(window.AndroidAlarm) return;
   try{
     const r=await api('getEmergency',{lastChecked:lastEmgCheckTime});
     if(r.success && r.message){
@@ -1351,7 +1353,8 @@ async function init(){
     }
   }catch(e){}
   // 이후 30초마다 새 긴급메시지만 체크
-  setInterval(checkEmergency,30000);
+  // 긴급메시지 체크는 APK FCM으로만 처리 (웹앱 폴링 제거)
+  // setInterval(checkEmergency,30000);
 
   // 관리자 대시보드 열려있으면 30초마다 통계 자동 갱신
   setInterval(()=>{
