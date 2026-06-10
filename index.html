@@ -1061,6 +1061,12 @@ function goTab(tab,idx){
   document.getElementById('dot2').classList.toggle('active',p===2);
   if(tab==='list')renderList();
   if(tab!=='settings')stopPreview();
+  if(tab==='fire'){
+    setTimeout(()=>{
+      const inp = document.getElementById('fireNameInput');
+      if(inp){ inp.blur(); inp.focus(); }
+    }, 100);
+  }
 }
 document.getElementById('navScroll').addEventListener('scroll',function(){
   const p=this.scrollLeft>this.clientWidth*0.8?1:0;
