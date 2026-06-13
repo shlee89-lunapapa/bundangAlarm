@@ -994,6 +994,9 @@ function delAlarm(id){
   MEM.alarms=MEM.alarms.filter(a=>a.id!==id);
   saveAlarmsLocal();scheduleAlarms();renderList();
   api('deleteAlarm',{alarmId:id}).catch(()=>{});
+  // 알람이 하나도 없으면 배너 제거, 있으면 갱신
+  if(MEM.alarms.length===0) cancelNextBanner();
+  else showNextAlarmBanner();
   toast('알람이 삭제되었습니다');
 }
 function clearAll(){
@@ -1006,7 +1009,13 @@ function clearAll(){
   }catch(e){}
   MEM.alarms=[];saveAlarmsLocal();scheduleAlarms();renderList();
   api('deleteAllAlarms').catch(()=>{});
+  // 배너 제거
+  cancelNextBanner();
   toast('전체 알람이 삭제되었습니다');
+}
+function cancelNextBanner(){
+  if(!window.AndroidAlarm) return;
+  try{ if(window.AndroidAlarm.cancelNextAlarm) window.AndroidAlarm.cancelNextAlarm(); }catch(e){}
 }
 
 // =====================================================
