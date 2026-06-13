@@ -268,6 +268,12 @@ const DIAMOND_DATA_LOCAL = {"17001": {"type": "평일주간", "checkin": "05:31"
           <div><div class="reg-title">운전취급 규정</div><div class="reg-sub">분당선 운전 기본 규정</div></div>
         </div><span style="font-size:10px;color:var(--GRL);">›</span>
       </div>
+      <div class="reg-item" onclick="openRescueTutorial()">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="reg-icon">🚃</div>
+          <div><div class="reg-title">구원운전</div><div class="reg-sub">추진·견인 단계별 조치 튜토리얼</div></div>
+        </div><span style="font-size:10px;color:var(--GRL);">›</span>
+      </div>
       <div style="text-align:center;padding:16px;color:#ccc;font-size:12px;">📌 규정 개정 시 관리자가 구글 시트에서 업데이트합니다</div>
     </div>
 
@@ -312,6 +318,20 @@ const DIAMOND_DATA_LOCAL = {"17001": {"type": "평일주간", "checkin": "05:31"
     </div>
     <div class="modal-body" id="regModalBody">
       <div style="text-align:center;padding:40px 20px;color:var(--GRL);"><div style="font-size:40px;margin-bottom:12px;">📄</div><div style="font-size:14px;line-height:1.7;">내용 준비 중입니다.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 구원운전 튜토리얼 모달 -->
+<div class="modal-ov" id="rescueModal" onclick="if(event.target.id==='rescueModal')closeRescue()">
+  <div class="modal-sheet" style="max-height:92vh;">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <div class="modal-title">🚃 구원운전 튜토리얼</div>
+      <button class="modal-close" onclick="closeRescue()">✕</button>
+    </div>
+    <div class="modal-body" id="rescueModalBody" style="padding:0 16px 24px;">
+      <!-- 튜토리얼 내용이 JS로 렌더링됨 -->
     </div>
   </div>
 </div>
@@ -992,6 +1012,249 @@ function clearAll(){
 // =====================================================
 // 사규
 // =====================================================
+
+// 구원운전 튜토리얼
+function openRescueTutorial(){
+  document.getElementById('rescueModal').classList.add('show');
+  if(!window._rescueInit){
+    window._rescueInit=true;
+    document.getElementById('rescueModalBody').innerHTML=rescueTutorialHTML();
+    window._rRole='';window._rMethod='';window._rCur=0;
+    rescueShow('rsc-select');
+  }
+}
+function closeRescue(){
+  document.getElementById('rescueModal').classList.remove('show');
+}
+
+function rescueTutorialHTML(){
+  return `
+<div id="rsc-select" style="padding-top:8px">
+  <div style="font-size:17px;font-weight:500;color:var(--TX);margin-bottom:4px">어떤 역할로 진행하나요?</div>
+  <div style="font-size:13px;color:var(--TX2);margin-bottom:16px">열차 역할을 선택하면 해당 절차를 안내합니다</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <button onclick="rescueSelRole('rescue')" style="background:var(--WH);border:0.5px solid #e0e0e0;border-radius:12px;padding:16px 12px;cursor:pointer;text-align:left;">
+      <div style="font-size:15px;font-weight:500;color:var(--TX);margin-bottom:4px">구원열차</div>
+      <div style="font-size:12px;color:var(--TX2);line-height:1.4">고장열차를 구원하러 출동하는 기관사</div>
+    </button>
+    <button onclick="rescueSelRole('broken')" style="background:var(--WH);border:0.5px solid #e0e0e0;border-radius:12px;padding:16px 12px;cursor:pointer;text-align:left;">
+      <div style="font-size:15px;font-weight:500;color:var(--TX);margin-bottom:4px">고장열차</div>
+      <div style="font-size:12px;color:var(--TX2);line-height:1.4">고장이 발생하여 구원을 요청한 기관사</div>
+    </button>
+  </div>
+</div>
+
+<div id="rsc-method" style="display:none;padding-top:8px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <button onclick="rescueShow('rsc-select')" style="background:none;border:0.5px solid #e0e0e0;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--TX)">← 처음</button>
+    <span id="rm-badge" style="font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;background:#f0f0f0;color:#666"></span>
+  </div>
+  <div style="font-size:17px;font-weight:500;color:var(--TX);margin-bottom:4px">구원 방식을 선택하세요</div>
+  <div style="font-size:13px;color:var(--TX2);margin-bottom:16px">열차 배치에 따라 달라집니다</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button onclick="rescueSelMethod('push')" style="background:var(--WH);border:0.5px solid #e0e0e0;border-radius:12px;padding:16px 12px;cursor:pointer;text-align:left;">
+      <div style="font-size:15px;font-weight:500;color:var(--TX);margin-bottom:4px">추진운전</div>
+      <div style="font-size:12px;color:var(--TX2);line-height:1.4">구원열차가 뒤에서 밀어줌<br>고장❶❷ ←← 구원❸❹</div>
+    </button>
+    <button onclick="rescueSelMethod('pull')" style="background:var(--WH);border:0.5px solid #e0e0e0;border-radius:12px;padding:16px 12px;cursor:pointer;text-align:left;">
+      <div style="font-size:15px;font-weight:500;color:var(--TX);margin-bottom:4px">견인운전</div>
+      <div style="font-size:12px;color:var(--TX2);line-height:1.4">구원열차가 앞에서 끌어줌<br>구원❶❷ ←← 고장❸❹</div>
+    </button>
+  </div>
+</div>
+
+<div id="rsc-steps" style="display:none;padding-top:8px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <button onclick="rescueShow('rsc-select')" style="background:none;border:0.5px solid #e0e0e0;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--TX)">🏠</button>
+    <span id="rs-badge" style="font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;background:#f0f0f0;color:#666"></span>
+    <span id="rs-count" style="font-size:12px;color:var(--TX2)"></span>
+  </div>
+  <div id="rs-diagram" style="background:#f5f5f5;border-radius:12px;padding:10px 6px 6px;margin-bottom:10px">
+    <svg id="rs-svg" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block"></svg>
+  </div>
+  <div id="rs-content"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:8px">
+    <button id="rs-prev" onclick="rescuePrev()" style="background:var(--WH);border:0.5px solid #e0e0e0;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;color:var(--TX)">← 이전</button>
+    <div id="rs-dots" style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:200px"></div>
+    <button id="rs-next" onclick="rescueNext()" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px">다음 →</button>
+  </div>
+</div>
+
+<div id="rsc-end" style="display:none;padding-top:8px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <button onclick="rescueShow('rsc-select')" style="background:none;border:0.5px solid #e0e0e0;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--TX)">🏠</button>
+    <span id="re-badge" style="font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;background:#f0f0f0;color:#666"></span>
+  </div>
+  <div style="background:#EAF3DE;border:0.5px solid #97C459;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+    <div style="font-size:15px;font-weight:500;color:#27500A">✅ 절차 완료</div>
+    <div style="font-size:13px;color:#3B6D11;margin-top:4px">관제사 승인 후 운행을 시작하세요</div>
+  </div>
+  <div id="re-sum"></div>
+  <div style="text-align:center"><button onclick="rescueReset()" style="background:var(--WH);border:0.5px solid #e0e0e0;border-radius:8px;padding:8px 20px;cursor:pointer;font-size:13px;color:var(--TX);margin-top:12px">↺ 처음으로</button></div>
+</div>`;
+}
+
+const _RD={
+rescue_push:[
+  {active:[1,3],rescue:['고장위치·고장내용·관제사 승인번호 사전숙지','ATC정지 구간: 15km/h 이하 운전','고장열차 50m 전방 일단정차','고장기관사 전호로 3m 전방 정차'],broken:['구원 수배 (관제센터)','MC키 취거','❶번 운전실 대기'],note:'준비물: 휴대무전기·일자드라이버·전호기·103선(필요시)'},
+  {active:[2,3],rescue:['❸번: HBCOS Cut-out (원핸들)'],broken:['❷번: 대기'],note:'구원열차가 3m 정차 후 ❸번 운전실에서 취급'},
+  {active:[2,3],rescue:['❸번: 12JP 커버 개방','❸번: 연결기 공기관 마개 제거','❸번: 연결기 좌우·상하 위치 확인'],broken:['❷번: 12JP 분리','❷번: 연결기 공기관 마개 제거','❷번: 연결기 좌우·상하 위치 확인']},
+  {active:[2,3],rescue:['무선전호 후 연결','근소퇴거로 연결상태 확인','MC키 취거 후 하차'],broken:['전호로 구원열차 연결 유도','연결 확인 (근소퇴거)']},
+  {active:[2,3],rescue:['❸번: 12JP 연결 (위쪽덮개 내려줄 것)','❸번: MR 콕크 개방'],broken:['❷번: MR 콕크 개방'],note:'⑴ 12JP연결 ⑵ RSOS ⑶ BC핸들삽입 순서 반드시 지킬 것'},
+  {active:[2,3],rescue:['❸번: MR 관통 확인 (8~9 ㎏/㎠)'],broken:['❷번: MR 관통 확인 (8~9 ㎏/㎠)']},
+  {active:[2,3],rescue:['❸번: RSOS스위치(분당선) 취급','❸번: 통화(버저)시험 — RSOS 연결 양호 확인','❸번: ATCCOS Cut-out'],broken:['❷번: RSOS스위치(분당선) 취급','❷번: 통화(버저)시험','❷번: DILPN OFF'],note:'1~43편성, 73~76편성 RSOS 위치 상이'},
+  {active:[1,3],rescue:['❸번: PPN OFF','❸번: DSDBS Cut-out (원핸들)','※ DCCONN ON 취급 (103선 연결시)'],broken:['❷번: DCCONN ON (103선 연결시)','❶번 운전실로 이동','❶번: PPN OFF','❶번: HBCOS Cut-out (원핸들)','❶번: DSDBS Cut-out (원핸들)','❶번: MC키 삽입 후 7스텝 유지'],note:'고장열차 기관사는 ❶번으로 이동 후 취급'},
+  {active:[1,3],rescue:['❸번: MC키 삽입 후 7스텝 유지'],broken:['❶번: MC키 7스텝 유지 상태 확인'],note:'22~76편성 ATS/ATC겸용차: 핸들 삽입 후 ADU화면 ATC선택 확인'},
+  {active:[1,3],rescue:['비상LOOP 확인 (고장차 7스텝, 구원차 완해)','❸번: 비상 → 7~1 → 완해','❸번: 7스텝'],broken:['❶번: 완해 → 1~7 → 비상','❶번: 완해'],note:'제동시험 중 완해차량의 제동불완해 현시는 정상'},
+  {active:[1,3],rescue:['❸번: 역행·제동취급','신호현시대로 운행','운전속도: 총괄제동 45km/h / 각차제동 25km/h'],broken:['❶번: 전방 주시','❶번: 비상시 제동 취급','운전상황 수시로 구원기관사에게 통보','DSD 계속 누를 것 (투핸들)'],note:'관제사 승인 후 운행 개시'}
+],
+rescue_pull:[
+  {active:[2],rescue:['고장위치·고장내용·관제사 승인번호 사전숙지','ATC정지 구간: 15km/h 이하 운전','고장열차 50m 전방 일단정차','고장기관사 전호로 3m 전방 정차'],broken:['구원 수배 (관제센터)','MC키 취거','❸번 운전실 대기'],note:'준비물: 휴대무전기·일자드라이버·전호기·103선(필요시)'},
+  {active:[2,3],rescue:['❷번: HBCOS Cut-out (원핸들)'],broken:['❸번: 대기'],note:'구원열차 ❷번(연결부쪽)에서 취급'},
+  {active:[2,3],rescue:['❷번: 12JP 커버 개방','❷번: 연결기 공기관 마개 제거','❷번: 연결기 좌우·상하 위치 확인'],broken:['❸번: 12JP 분리','❸번: 연결기 공기관 마개 제거','❸번: 연결기 좌우·상하 위치 확인']},
+  {active:[2,3],rescue:['무선전호 후 연결','근소퇴거로 연결상태 확인','MC키 취거 후 하차'],broken:['전호로 구원열차 연결 유도','연결 확인 (근소퇴거)']},
+  {active:[2,3],rescue:['❷번: 12JP 연결 (위쪽덮개 내려줄 것)','❷번: MR 콕크 개방'],broken:['❸번: MR 콕크 개방'],note:'⑴ 12JP연결 ⑵ RSOS ⑶ BC핸들삽입 순서 반드시 지킬 것'},
+  {active:[2,3],rescue:['❷번: MR 관통 확인 (8~9 ㎏/㎠)'],broken:['❸번: MR 관통 확인 (8~9 ㎏/㎠)']},
+  {active:[2,3],rescue:['❷번: RSOS스위치(분당선) 취급','❷번: 통화(버저)시험 — RSOS 연결 양호 확인','❷번: ATCCOS Cut-out'],broken:['❸번: RSOS스위치(분당선) 취급','❸번: 통화(버저)시험','❸번: DILPN OFF'],note:'1~43편성, 73~76편성 RSOS 위치 상이'},
+  {active:[1,3],rescue:['❶번: PPN OFF','❶번: HBCOS Cut-out (원핸들)','❶번: DSDBS Cut-out (원핸들)','구원열차 기관사는 ❷번→❶번 운전실로 이동 후 취급'],broken:['❸번: DCCONN ON (103선 연결시)','❸번: PPN OFF','❸번: DSDBS Cut-out (원핸들)','❸번: MC키 삽입 후 7스텝 유지'],note:'DCCONN ON 취급 (103선 연결시)'},
+  {active:[2,3],rescue:['❷번: MC키 삽입 후 7스텝 유지'],broken:['❸번: MC키 7스텝 유지 상태 확인'],note:'22~76편성 ATS/ATC겸용차: 핸들 삽입 후 ADU화면 ATC선택 확인'},
+  {active:[1,3],rescue:['비상LOOP 확인 (고장차 7스텝, 구원차 완해)','❷번: 비상 → 7~1 → 완해','❷번: 7스텝'],broken:['❸번: 완해 → 1~7 → 비상','❸번: 완해'],note:'제동시험 중 완해차량의 제동불완해 현시는 정상'},
+  {active:[1,3],rescue:['❶번: 역행·제동취급','신호현시대로 운행','운전속도: 총괄제동 45km/h / 각차제동 25km/h'],broken:[],note:'관제사 승인 후 운행 개시'}
+],
+broken_push:[
+  {active:[1,3],rescue:['고장위치·고장내용·관제사 승인번호 사전숙지','ATC정지 구간: 15km/h 이하 운전','고장열차 50m 전방 일단정차','고장기관사 전호로 3m 전방 정차'],broken:['구원 수배 (관제센터)','MC키 취거','❶번 운전실 대기'],note:'준비물: 휴대무전기·일자드라이버·전호기·103선(필요시)'},
+  {active:[2,3],rescue:['❸번: HBCOS Cut-out (원핸들)'],broken:['❷번: 대기'],note:'구원열차가 3m 정차 후 ❸번 운전실에서 취급'},
+  {active:[2,3],rescue:['❸번: 12JP 커버 개방','❸번: 연결기 공기관 마개 제거','❸번: 연결기 좌우·상하 위치 확인'],broken:['❷번: 12JP 분리','❷번: 연결기 공기관 마개 제거','❷번: 연결기 좌우·상하 위치 확인']},
+  {active:[2,3],rescue:['무선전호 후 연결','근소퇴거로 연결상태 확인','MC키 취거 후 하차'],broken:['전호로 구원열차 연결 유도','연결 확인 (근소퇴거)']},
+  {active:[2,3],rescue:['❸번: 12JP 연결 (위쪽덮개 내려줄 것)','❸번: MR 콕크 개방'],broken:['❷번: MR 콕크 개방'],note:'⑴ 12JP연결 ⑵ RSOS ⑶ BC핸들삽입 순서 반드시 지킬 것'},
+  {active:[2,3],rescue:['❸번: MR 관통 확인 (8~9 ㎏/㎠)'],broken:['❷번: MR 관통 확인 (8~9 ㎏/㎠)']},
+  {active:[2,3],rescue:['❸번: RSOS스위치(분당선) 취급','❸번: 통화(버저)시험 — RSOS 연결 양호 확인','❸번: ATCCOS Cut-out'],broken:['❷번: RSOS스위치(분당선) 취급','❷번: 통화(버저)시험','❷번: DILPN OFF'],note:'1~43편성, 73~76편성 RSOS 위치 상이'},
+  {active:[1,3],rescue:['❸번: PPN OFF','❸번: DSDBS Cut-out (원핸들)','※ DCCONN ON 취급 (103선 연결시)'],broken:['❷번: DCCONN ON (103선 연결시)','❶번 운전실로 이동','❶번: PPN OFF','❶번: HBCOS Cut-out (원핸들)','❶번: DSDBS Cut-out (원핸들)','❶번: MC키 삽입 후 7스텝 유지'],note:'고장열차 기관사는 ❶번으로 이동 후 취급'},
+  {active:[1,3],rescue:['❸번: MC키 삽입 후 7스텝 유지'],broken:['❶번: MC키 7스텝 유지 상태 확인'],note:'22~76편성 ATS/ATC겸용차: 핸들 삽입 후 ADU화면 ATC선택 확인'},
+  {active:[1,3],rescue:['비상LOOP 확인 (고장차 7스텝, 구원차 완해)','❸번: 비상 → 7~1 → 완해','❸번: 7스텝'],broken:['❶번: 완해 → 1~7 → 비상','❶번: 완해'],note:'제동시험 중 완해차량의 제동불완해 현시는 정상'},
+  {active:[1,3],rescue:['❸번: 역행·제동취급','신호현시대로 운행','운전속도: 총괄제동 45km/h / 각차제동 25km/h'],broken:['❶번: 전방 주시','❶번: 비상시 제동 취급','운전상황 수시로 구원기관사에게 통보','DSD 계속 누를 것 (투핸들)'],note:'관제사 승인 후 운행 개시'}
+],
+broken_pull:[
+  {active:[2,3],rescue:['고장위치·고장내용·관제사 승인번호 사전숙지','ATC정지 구간: 15km/h 이하 운전','고장열차 50m 전방 일단정차','고장기관사 전호로 3m 전방 정차'],broken:['구원 수배 (관제센터)','MC키 취거','❸번 운전실 대기'],note:'준비물: 휴대무전기·일자드라이버·전호기·103선(필요시)'},
+  {active:[2,3],rescue:['❷번: HBCOS Cut-out (원핸들)'],broken:['❸번: 대기'],note:'구원열차 ❷번(연결부쪽)에서 취급'},
+  {active:[2,3],rescue:['❷번: 12JP 커버 개방','❷번: 연결기 공기관 마개 제거','❷번: 연결기 좌우·상하 위치 확인'],broken:['❸번: 12JP 분리','❸번: 연결기 공기관 마개 제거','❸번: 연결기 좌우·상하 위치 확인']},
+  {active:[2,3],rescue:['무선전호 후 연결','근소퇴거로 연결상태 확인','MC키 취거 후 하차'],broken:['전호로 구원열차 연결 유도','연결 확인 (근소퇴거)']},
+  {active:[2,3],rescue:['❷번: 12JP 연결 (위쪽덮개 내려줄 것)','❷번: MR 콕크 개방'],broken:['❸번: MR 콕크 개방'],note:'⑴ 12JP연결 ⑵ RSOS ⑶ BC핸들삽입 순서 반드시 지킬 것'},
+  {active:[2,3],rescue:['❷번: MR 관통 확인 (8~9 ㎏/㎠)'],broken:['❸번: MR 관통 확인 (8~9 ㎏/㎠)']},
+  {active:[2,3],rescue:['❷번: RSOS스위치(분당선) 취급','❷번: 통화(버저)시험 — RSOS 연결 양호 확인','❷번: DILPN OFF'],broken:['❸번: RSOS스위치(분당선) 취급','❸번: 통화(버저)시험','❸번: ATCCOS Cut-out'],note:'1~43편성, 73~76편성 RSOS 위치 상이'},
+  {active:[1,3],rescue:['❷번: DCCONN ON (103선 연결시)','❶번 운전실로 이동','❶번: PPN OFF','❶번: HBCOS Cut-out (원핸들)','❶번: DSDBS Cut-out (원핸들)'],broken:['❸번: PPN OFF','❸번: DSDBS Cut-out (원핸들)','❸번: MC키 삽입 후 7스텝 유지'],note:'구원열차 기관사는 ❷번→❶번 운전실로 이동 후 취급 / 고장열차 기관사는 ❸번에서 취급'},
+  {active:[2,3],rescue:['❷번: MC키 삽입 후 7스텝 유지'],broken:['❸번: MC키 7스텝 유지 상태 확인'],note:'22~76편성 ATS/ATC겸용차: 핸들 삽입 후 ADU화면 ATC선택 확인'},
+  {active:[1,3],rescue:['비상LOOP 확인 (고장차 7스텝, 구원차 완해)','❷번: 비상 → 7~1 → 완해','❷번: 7스텝'],broken:['❸번: 완해 → 1~7 → 비상','❸번: 완해'],note:'제동시험 중 완해차량의 제동불완해 현시는 정상'},
+  {active:[1,3],rescue:['❶번: 역행·제동취급','신호현시대로 운행','운전속도: 총괄제동 45km/h / 각차제동 25km/h'],broken:[],note:'관제사 승인 후 운행 개시'}
+]};
+
+function rescueShow(id){
+  ['rsc-select','rsc-method','rsc-steps','rsc-end'].forEach(s=>{const e=document.getElementById(s);if(e)e.style.display='none';});
+  const el=document.getElementById(id);if(el)el.style.display='block';
+}
+function rescueSelRole(r){
+  window._rRole=r;
+  const el=document.getElementById('rm-badge');
+  if(el)el.textContent=r==='rescue'?'구원열차':'고장열차';
+  rescueShow('rsc-method');
+}
+function rescueSelMethod(m){
+  window._rMethod=m;window._rCur=0;
+  rescueRender();rescueShow('rsc-steps');
+}
+function rescuePrev(){
+  if(window._rCur>0){window._rCur--;rescueRender();}
+  else rescueShow('rsc-method');
+}
+function rescueNext(){
+  const steps=_RD[window._rRole+'_'+window._rMethod];
+  if(window._rCur<steps.length-1){window._rCur++;rescueRender();}
+  else rescueEnd();
+}
+function rescueReset(){
+  window._rRole='';window._rMethod='';window._rCur=0;
+  rescueShow('rsc-select');
+}
+
+function rescueDraw(method,activeSet){
+  const svg=document.getElementById('rs-svg');
+  if(!svg)return;
+  const isPush=method==='push';
+  const RC='#185FA5',RD='#B5D4F4',BC='#993C1D',BD='#F5C4B3';
+  const DIM='rgba(155,153,145,0.3)';
+  const YEL='#FFD166',YELT='#7B4F00',DIMY='#D3D1C7',DIMYT='#888780';
+  const TW=240,TH=54,TY=28,CAB=48,GAP=18,LX=8,RX=LX+TW+GAP,CY=TY+TH/2;
+  const L_RESCUE=!isPush,R_RESCUE=isPush;
+  let h='';
+  [[LX,L_RESCUE],[RX,R_RESCUE]].forEach(([tx,isR])=>{
+    h+=`<rect x="${tx}" y="${TY}" width="${TW}" height="${TH}" rx="7" fill="${isR?RD:BD}"/>`;
+    for(let i=0;i<4;i++){const wx=tx+CAB+7+i*33;h+=`<rect x="${wx}" y="${TY+13}" width="20" height="11" rx="3" fill="rgba(255,255,255,0.45)"/>`;}
+  });
+  const cx1=LX+TW,cx2=RX,mid=(cx1+cx2)/2;
+  h+=`<line x1="${cx1}" y1="${CY}" x2="${cx2}" y2="${CY}" stroke="#888" stroke-width="4"/>`;
+  h+=`<circle cx="${mid}" cy="${CY}" r="5" fill="#666"/>`;
+  [{n:1,x:LX,isR:L_RESCUE},{n:2,x:LX+TW-CAB,isR:L_RESCUE},{n:3,x:RX,isR:R_RESCUE},{n:4,x:RX+TW-CAB,isR:R_RESCUE}].forEach(({n,x,isR})=>{
+    const on=activeSet.has(n);
+    h+=`<rect x="${x}" y="${TY}" width="${CAB}" height="${TH}" rx="7" fill="${on?(isR?RC:BC):DIM}"/>`;
+    h+=`<circle cx="${x+CAB/2}" cy="${CY-6}" r="12" fill="${on?YEL:DIMY}"/>`;
+    h+=`<text x="${x+CAB/2}" y="${CY-1}" text-anchor="middle" font-size="12" font-weight="500" fill="${on?YELT:DIMYT}">${n}</text>`;
+    h+=`<text x="${x+CAB/2}" y="${TY+TH-7}" text-anchor="middle" font-size="9" fill="${on?'rgba(255,255,255,0.9)':'rgba(130,128,120,0.7)'}">${on?'조치중':'대기'}</text>`;
+  });
+  h+=`<text x="${LX+TW/2}" y="${TY-8}" text-anchor="middle" font-size="11" font-weight="500" fill="${isPush?BC:RC}">${isPush?'고장열차':'구원열차'}</text>`;
+  h+=`<text x="${RX+TW/2}" y="${TY-8}" text-anchor="middle" font-size="11" font-weight="500" fill="${isPush?RC:BC}">${isPush?'구원열차':'고장열차'}</text>`;
+  const arrY=TY+TH+15;
+  h+=`<text x="${LX+TW/2}" y="${arrY}" text-anchor="middle" font-size="11" fill="#5F5E5A">← 운행방향</text>`;
+  const legY=arrY+17;
+  h+=`<rect x="${LX}" y="${legY}" width="9" height="9" rx="2" fill="#185FA5"/>`;
+  h+=`<text x="${LX+13}" y="${legY+8}" font-size="10" fill="#185FA5">구원열차 조치</text>`;
+  h+=`<rect x="${LX+115}" y="${legY}" width="9" height="9" rx="2" fill="#993C1D"/>`;
+  h+=`<text x="${LX+128}" y="${legY+8}" font-size="10" fill="#993C1D">고장열차 조치</text>`;
+  h+=`<rect x="${LX+242}" y="${legY}" width="9" height="9" rx="2" fill="rgba(155,153,145,0.35)"/>`;
+  h+=`<text x="${LX+255}" y="${legY+8}" font-size="10" fill="#888780">대기</text>`;
+  svg.setAttribute('viewBox',`0 0 ${RX+TW+8} ${legY+13}`);
+  svg.innerHTML=h;
+}
+
+function rescueRender(){
+  const key=window._rRole+'_'+window._rMethod;
+  const steps=_RD[key],s=steps[window._rCur];
+  const labels={rescue_push:'구원열차 · 추진',rescue_pull:'구원열차 · 견인',broken_push:'고장열차 · 추진',broken_pull:'고장열차 · 견인'};
+  const bd=document.getElementById('rs-badge'),bc=document.getElementById('rs-count');
+  if(bd)bd.textContent=labels[key];
+  if(bc)bc.textContent=`단계 ${window._rCur+1} / ${steps.length}`;
+  rescueDraw(window._rMethod,new Set(s.active));
+  const isR=window._rRole==='rescue';
+  const mi=isR?s.rescue:s.broken,oi=isR?s.broken:s.rescue;
+  const mt=isR?'#E6F1FB':'#FAECE7',mtc=isR?'#0C447C':'#993C1D';
+  const ot=isR?'#FAECE7':'#E6F1FB',otc=isR?'#993C1D':'#0C447C';
+  const ml=isR?'구원열차':'고장열차',ol=isR?'고장열차':'구원열차';
+  let h=`<div style="background:#fff;border:0.5px solid #e8e8e8;border-radius:12px;padding:16px;margin-bottom:10px">`;
+  h+=`<div style="display:flex;gap:6px;margin-bottom:8px"><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;background:${mt};color:${mtc}">${ml}</span></div>`;
+  if(!mi||mi.length===0){h+=`<div style="font-size:14px;color:#999">이번 단계에서 조치 없음</div>`;}
+  else mi.forEach((item,i)=>{h+=`<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><span style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:#E6F1FB;color:#0C447C;font-size:11px;font-weight:500;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span><span style="font-size:14px;color:var(--TX);line-height:1.6">${item}</span></div>`;});
+  h+=`<div style="border-top:0.5px solid #eee;padding-top:10px;margin-top:6px">`;
+  h+=`<div style="display:flex;gap:6px;margin-bottom:8px"><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;background:${ot};color:${otc}">${ol}</span><span style="font-size:11px;color:#999">상대방 조치</span></div>`;
+  if(!oi||oi.length===0){h+=`<div style="font-size:14px;color:#999">이번 단계에서 조치 없음</div>`;}
+  else oi.forEach((item,i)=>{h+=`<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><span style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:#f0f0f0;color:#999;font-size:11px;font-weight:500;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span><span style="font-size:14px;color:#999;line-height:1.6">${item}</span></div>`;});
+  h+='</div>';
+  if(s.note)h+=`<div style="margin-top:10px;padding:8px 10px;background:#f7f7f7;border-radius:8px;font-size:12px;color:#666;line-height:1.6">ℹ️ ${s.note}</div>`;
+  h+='</div>';
+  const cont=document.getElementById('rs-content');if(cont)cont.innerHTML=h;
+  const dots=document.getElementById('rs-dots');
+  if(dots)dots.innerHTML=steps.map((_,i)=>`<div style="width:6px;height:6px;border-radius:50%;background:${i<window._rCur?'#9FE1CB':i===window._rCur?'#185FA5':'#ddd'}"></div>`).join('');
+  const prev=document.getElementById('rs-prev');if(prev)prev.disabled=window._rCur===0;
+  const next=document.getElementById('rs-next');
+  if(next)next.textContent=window._rCur===steps.length-1?'완료 ✓':'다음 →';
+}
+
+function rescueEnd(){
+  const key=window._rRole+'_'+window._rMethod;
+  const eb=document.getElementById('re-badge');
+  const labels={rescue_push:'구원열차 추진',rescue_pull:'구원열차 견인',broken_push:'고장열차 추진',broken_pull:'고장열차 견인'};
+  if(eb)eb.textContent=labels[key];
+  rescueShow('rsc-end');
+}
+
 function openReg(type){
   const titles={고장조치:'전기동차 고장조치 매뉴얼',비상대응:'비상대응 매뉴얼',안내방송:'안내방송 매뉴얼',운전취급:'운전취급 규정'};
   document.getElementById('regModalTitle').textContent=titles[type]||type;
