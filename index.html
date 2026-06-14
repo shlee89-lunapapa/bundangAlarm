@@ -857,6 +857,13 @@ function recalcAlarms(s) {
 function subMin(t,m){if(!t)return'--:--';const[h,mn]=t.split(':').map(Number);let x=h*60+mn-m;if(x<0)x+=1440;return`${String(Math.floor(x/60)%24).padStart(2,'0')}:${String(x%60).padStart(2,'0')}`;}
 function fmt24(t){if(!t||t==='--:--')return'--:--';const[h,m]=t.split(':').map(Number);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
 function dirB(dir,show){if(!show||!dir)return'';return`<span class="${dir==='상행'?'up-badge':'dn-badge'}">${dir}</span>`;}
+// 열차번호로 상행/하행 판단 (분당선: 홀수=상행 왕십리방면, 짝수=하행 수원방면)
+function calcDir(trainNo,showDir){
+  if(!showDir||!trainNo)return null;
+  const num=parseInt(String(trainNo).replace(/[^0-9]/g,''));
+  if(isNaN(num))return null;
+  return num%2===1?'상행':'하행';
+}
 function remainStr(alarmTime){
   const now=new Date();
   const[h,m]=alarmTime.split(':').map(Number);
@@ -933,8 +940,8 @@ async function fetchDia(val){
     const off=a.offsetKey==='박출고'?10:(s[m.off]||20);
     const subLbl=a.offsetKey==='박출고'?'출고준비 10분 전':`${off}분 전`;
     const at=subMin(a.time,off);
-    html+=prevItem(m.label,m.color,subLbl,at,a.time,a.trainNo||'',a.direction,m.showDir);
-    curPrev.push({label:m.label,color:m.color,alarmTime:at,realTime:a.time,endTime:a.endTime||null,diamond:val,dtype:data.type,direction:a.direction,trainNo:a.trainNo,showDir:m.showDir});
+    html+=prevItem(m.label,m.color,subLbl,at,a.time,a.trainNo||'',calcDir(a.trainNo,m.showDir),m.showDir);
+    curPrev.push({label:m.label,color:m.color,alarmTime:at,realTime:a.time,endTime:a.endTime||null,diamond:val,dtype:data.type,direction:calcDir(a.trainNo,m.showDir),trainNo:a.trainNo,showDir:m.showDir});
   });
   prev.innerHTML=html||'<div class="no-prev">알람 항목이 없습니다</div>';
   btnW.style.display=curPrev.length?'block':'none';
