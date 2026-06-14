@@ -1612,7 +1612,12 @@ setInterval(()=>{if(document.getElementById('sc-list').classList.contains('activ
 // =====================================================
 // 네이티브 앱(Android)에 알람 등록
 function registerNativeAlarms(){
-  if(!window.AndroidAlarm) return; // 웹앱 환경이면 스킵
+  if(!window.AndroidAlarm) return;
+  // 현재 선택된 알람음 URL
+  const sound = SOUNDS.find(s=>s.id===curSound);
+  const soundUrl = sound
+    ? 'https://shlee89-lunapapa.github.io/bundangAlarm/' + sound.src.replace('./', '')
+    : '';
   MEM.alarms.forEach(a => {
     try {
       window.AndroidAlarm.setAlarm(JSON.stringify({
@@ -1624,6 +1629,7 @@ function registerNativeAlarms(){
         direction: a.direction || '',
         realTime:  a.realTime || '',
         endTime:   a.endTime  || '',
+        soundUrl:  soundUrl,
       }));
     } catch(e){ console.log('네이티브 알람 등록 오류:', e); }
   });
